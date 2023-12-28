@@ -151,6 +151,24 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
             }
             break;
         }
+        case CConfigValue::eDataType::CONFIGDATATYPE_VEC2: {
+            try {
+                const auto SPACEPOS = value.find(' ');
+                if (SPACEPOS == std::string::npos)
+                    throw std::runtime_error("no space");
+                const auto LHS = value.substr(0, SPACEPOS);
+                const auto RHS = value.substr(SPACEPOS + 1);
+
+                if (LHS.contains(" ") || RHS.contains(" "))
+                    throw std::runtime_error("too many args");
+
+                VALUEIT->second = {SVector2D{std::stof(LHS), std::stof(RHS)}};
+            } catch (std::exception& e) {
+                result.setError(std::format("failed parsing a vec2: {}", e.what()));
+                return result;
+            }
+            break;
+        }
         case CConfigValue::eDataType::CONFIGDATATYPE_STR: {
             VALUEIT->second = {value.c_str()};
             break;

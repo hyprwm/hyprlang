@@ -32,6 +32,12 @@ CConfigValue::CConfigValue(const float value) {
     m_eType                            = CONFIGDATATYPE_FLOAT;
 }
 
+CConfigValue::CConfigValue(const SVector2D value) {
+    m_pData                                = calloc(1, sizeof(SVector2D));
+    *reinterpret_cast<SVector2D*>(m_pData) = value;
+    m_eType                                = CONFIGDATATYPE_VEC2;
+}
+
 CConfigValue::CConfigValue(const char* value) {
     m_pData = calloc(1, strlen(value) + 1);
     strncpy((char*)m_pData, value, strlen(value));
@@ -49,6 +55,11 @@ CConfigValue::CConfigValue(const CConfigValue& ref) {
         case eDataType::CONFIGDATATYPE_FLOAT: {
             m_pData                            = calloc(1, sizeof(float));
             *reinterpret_cast<float*>(m_pData) = std::any_cast<float>(ref.getValue());
+            break;
+        }
+        case eDataType::CONFIGDATATYPE_VEC2: {
+            m_pData                                = calloc(1, sizeof(SVector2D));
+            *reinterpret_cast<SVector2D*>(m_pData) = std::any_cast<SVector2D>(ref.getValue());
             break;
         }
         case eDataType::CONFIGDATATYPE_STR: {
@@ -71,6 +82,11 @@ void CConfigValue::operator=(const CConfigValue& ref) {
         case eDataType::CONFIGDATATYPE_FLOAT: {
             m_pData                            = calloc(1, sizeof(float));
             *reinterpret_cast<float*>(m_pData) = std::any_cast<float>(ref.getValue());
+            break;
+        }
+        case eDataType::CONFIGDATATYPE_VEC2: {
+            m_pData                                = calloc(1, sizeof(SVector2D));
+            *reinterpret_cast<SVector2D*>(m_pData) = std::any_cast<SVector2D>(ref.getValue());
             break;
         }
         case eDataType::CONFIGDATATYPE_STR: {

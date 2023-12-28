@@ -7,7 +7,7 @@
         std::cout << "Failed: " << #expr << ", expected " << #val << " but got " << RESULT << "\n";                                                                                \
         ret = 1;                                                                                                                                                                   \
     } else {                                                                                                                                                                       \
-        std::cout << "Passed " << #expr << ". Got " << #val << "\n";                                                                                                               \
+        std::cout << "Passed " << #expr << ". Got " << val << "\n";                                                                                                                \
     }
 
 int main(int argc, char** argv, char** envp) {
@@ -21,6 +21,7 @@ int main(int argc, char** argv, char** envp) {
         // setup config
         config.addConfigValue("testInt", 0L);
         config.addConfigValue("testFloat", 0.F);
+        config.addConfigValue("testVec", Hyprlang::SVector2D{69, 420});
         config.addConfigValue("testString", "");
         config.addConfigValue("testStringQuotes", "");
         config.addConfigValue("testCategory:testValueInt", 0L);
@@ -42,6 +43,8 @@ int main(int argc, char** argv, char** envp) {
         // test values
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testInt")), 123);
         EXPECT(std::any_cast<float>(config.getConfigValue("testFloat")), 123.456f);
+        auto EXP = Hyprlang::SVector2D{69, 420};
+        EXPECT(std::any_cast<Hyprlang::SVector2D>(config.getConfigValue("testVec")), EXP);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testString")), std::string{"Hello World! ## This is not a comment!"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringQuotes")), std::string{"\"Hello World!\""});
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueInt")), 123456L);

@@ -2,10 +2,25 @@
 #include <any>
 #include <memory>
 #include <string>
+#include <fstream>
 
 class CConfigImpl;
 
 namespace Hyprlang {
+
+    /* types */
+    struct SVector2D {
+        float x = 0, y = 0;
+
+        //
+        bool operator==(const SVector2D& rhs) const {
+            return x == rhs.x && y == rhs.y;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const SVector2D& rhs) {
+            return os << "[" << rhs.x << ", " << rhs.y << "]";
+        }
+    };
 
     struct SConfigValueImpl;
     /* Container for a config value */
@@ -15,6 +30,7 @@ namespace Hyprlang {
         CConfigValue(const int64_t value);
         CConfigValue(const float value);
         CConfigValue(const char* value);
+        CConfigValue(const SVector2D value);
         CConfigValue(const CConfigValue&);
         CConfigValue(CConfigValue&&);
         void operator=(const CConfigValue&);
@@ -27,6 +43,7 @@ namespace Hyprlang {
                 case CONFIGDATATYPE_INT: return std::any(*reinterpret_cast<int64_t*>(m_pData));
                 case CONFIGDATATYPE_FLOAT: return std::any(*reinterpret_cast<float*>(m_pData));
                 case CONFIGDATATYPE_STR: return std::any(reinterpret_cast<const char*>(m_pData));
+                case CONFIGDATATYPE_VEC2: return std::any(*reinterpret_cast<SVector2D*>(m_pData));
                 default: throw;
             }
             return {}; // unreachable
@@ -38,6 +55,7 @@ namespace Hyprlang {
             CONFIGDATATYPE_INT,
             CONFIGDATATYPE_FLOAT,
             CONFIGDATATYPE_STR,
+            CONFIGDATATYPE_VEC2,
         };
         eDataType m_eType = eDataType::CONFIGDATATYPE_EMPTY;
         void*     m_pData = nullptr;
