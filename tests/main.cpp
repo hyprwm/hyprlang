@@ -29,6 +29,9 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testCategory:nested1:testValueNest", 0L);
         config.addConfigValue("testCategory:nested1:nested2:testValueNest", 0L);
         config.addConfigValue("testDefault", 123L);
+        config.addConfigValue("testCategory:testColor1", 0L);
+        config.addConfigValue("testCategory:testColor2", 0L);
+        config.addConfigValue("testCategory:testColor3", 0L);
 
         config.commence();
 
@@ -52,6 +55,9 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:nested1:testValueNest")), 1L);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:nested1:nested2:testValueNest")), 1L);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testDefault")), 123L);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor1")), 0xFFFFFFFFL);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), 0xFF000000L);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), 0x22ffeeffL);
     } catch (const char* e) {
         std::cout << "Error: " << e << "\n";
         return 1;

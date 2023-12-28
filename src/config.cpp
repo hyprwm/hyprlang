@@ -3,6 +3,8 @@
 #include <fstream>
 #include <string>
 #include <format>
+#include <algorithm>
+#include <cmath>
 
 using namespace Hyprlang;
 
@@ -84,26 +86,51 @@ int64_t configStringToInt(const std::string& VALUE) {
         const auto VALUEWITHOUTHEX = VALUE.substr(2);
         return stol(VALUEWITHOUTHEX, nullptr, 16);
     } else if (VALUE.starts_with("rgba(") && VALUE.ends_with(')')) {
-        const auto VALUEWITHOUTFUNC = VALUE.substr(5, VALUE.length() - 6);
+        const auto VALUEWITHOUTFUNC = removeBeginEndSpacesTabs(VALUE.substr(5, VALUE.length() - 6));
 
-        if (removeBeginEndSpacesTabs(VALUEWITHOUTFUNC).length() != 8) {
-            throw std::invalid_argument("rgba() expects length of 8 characters (4 bytes)");
+        // try doing it the comma way first
+        if (std::count(VALUEWITHOUTFUNC.begin(), VALUEWITHOUTFUNC.end(), ',') == 3) {
+            // cool
+            std::string rolling = VALUEWITHOUTFUNC;
+            uint8_t     r       = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            rolling             = rolling.substr(rolling.find(',') + 1);
+            uint8_t g           = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            rolling             = rolling.substr(rolling.find(',') + 1);
+            uint8_t b           = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            rolling             = rolling.substr(rolling.find(',') + 1);
+            uint8_t a           = std::round(std::stof(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(',')))) * 255.f);
+
+            return a * 0x1000000L + r * 0x10000L + g * 0x100L + b;
+        } else if (VALUEWITHOUTFUNC.length() == 8) {
+            const auto RGBA = std::stol(VALUEWITHOUTFUNC, nullptr, 16);
+
+            // now we need to RGBA -> ARGB. The config holds ARGB only.
+            return (RGBA >> 8) + 0x1000000 * (RGBA & 0xFF);
         }
 
-        const auto RGBA = std::stol(VALUEWITHOUTFUNC, nullptr, 16);
+        throw std::invalid_argument("rgba() expects length of 8 characters (4 bytes) or 4 comma separated values");
 
-        // now we need to RGBA -> ARGB. The config holds ARGB only.
-        return (RGBA >> 8) + 0x1000000 * (RGBA & 0xFF);
     } else if (VALUE.starts_with("rgb(") && VALUE.ends_with(')')) {
-        const auto VALUEWITHOUTFUNC = VALUE.substr(4, VALUE.length() - 5);
+        const auto VALUEWITHOUTFUNC = removeBeginEndSpacesTabs(VALUE.substr(4, VALUE.length() - 5));
 
-        if (removeBeginEndSpacesTabs(VALUEWITHOUTFUNC).length() != 6) {
-            throw std::invalid_argument("rgb() expects length of 6 characters (3 bytes)");
+        // try doing it the comma way first
+        if (std::count(VALUEWITHOUTFUNC.begin(), VALUEWITHOUTFUNC.end(), ',') == 2) {
+            // cool
+            std::string rolling = VALUEWITHOUTFUNC;
+            uint8_t     r       = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            rolling             = rolling.substr(rolling.find(',') + 1);
+            uint8_t g           = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            rolling             = rolling.substr(rolling.find(',') + 1);
+            uint8_t b           = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+
+            return 0xFF000000L + r * 0x10000L + g * 0x100L + b;
+        } else if (VALUEWITHOUTFUNC.length() == 6) {
+            const auto RGB = std::stol(VALUEWITHOUTFUNC, nullptr, 16);
+
+            return RGB + 0xFF000000;
         }
 
-        const auto RGB = std::stol(VALUEWITHOUTFUNC, nullptr, 16);
-
-        return RGB + 0xFF000000; // 0xFF for opaque
+        throw std::invalid_argument("rgb() expects length of 6 characters (3 bytes) or 3 comma separated values");
     } else if (VALUE.starts_with("true") || VALUE.starts_with("on") || VALUE.starts_with("yes")) {
         return 1;
     } else if (VALUE.starts_with("false") || VALUE.starts_with("off") || VALUE.starts_with("no")) {
