@@ -243,11 +243,28 @@ CParseResult CConfig::parseLine(std::string line) {
     }
 
     if (equalsPos != std::string::npos) {
-        // set value
-        CParseResult ret = configSetValueSafe(removeBeginEndSpacesTabs(line.substr(0, equalsPos)), removeBeginEndSpacesTabs(line.substr(equalsPos + 1)));
-        if (ret.error) {
-            return ret;
+        // set value or call handler
+        CParseResult ret;
+        const auto   LHS = removeBeginEndSpacesTabs(line.substr(0, equalsPos));
+        const auto   RHS = removeBeginEndSpacesTabs(line.substr(equalsPos + 1));
+
+        bool         found = false;
+        for (auto& h : impl->handlers) {
+            if (!h.options.allowFlags && h.name != LHS)
+                continue;
+
+            if (h.options.allowFlags && !LHS.starts_with(h.name))
+                continue;
+
+            ret   = h.func(LHS.c_str(), RHS.c_str());
+            found = true;
         }
+
+        if (!found)
+            ret = configSetValueSafe(LHS, RHS);
+
+        if (ret.error)
+            return ret;
     } else if (!line.empty()) {
         // has to be a set
         if (line.contains("}")) {
@@ -318,4 +335,8 @@ CParseResult CConfig::parse() {
 CConfigValue* CConfig::getConfigValuePtr(const char* name) {
     const auto IT = impl->values.find(std::string{name});
     return IT == impl->values.end() ? nullptr : &IT->second;
+}
+
+void CConfig::registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options) {
+    impl->handlers.push_back(SHandler{name, options, func});
 }

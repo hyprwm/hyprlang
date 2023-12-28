@@ -22,6 +22,30 @@ namespace Hyprlang {
         }
     };
 
+    class CParseResult {
+      public:
+        bool        error = false;
+        const char* getError() const {
+            return errorString;
+        }
+        void setError(const char* err);
+
+      private:
+        void        setError(const std::string& err);
+
+        std::string errorStdString = "";
+        const char* errorString    = nullptr;
+
+        friend class CConfig;
+    };
+
+    struct SHandlerOptions {
+        bool allowFlags = false;
+    };
+
+    /* typedefs */
+    typedef CParseResult (*PCONFIGHANDLERFUNC)(const char* COMMAND, const char* VALUE);
+
     struct SConfigValueImpl;
     /* Container for a config value */
     class CConfigValue {
@@ -63,23 +87,6 @@ namespace Hyprlang {
         friend class CConfig;
     };
 
-    class CParseResult {
-      public:
-        bool        error = false;
-        const char* getError() const {
-            return errorString;
-        }
-        void setError(const char* err);
-
-      private:
-        void        setError(const std::string& err);
-
-        std::string errorStdString = "";
-        const char* errorString    = nullptr;
-
-        friend class CConfig;
-    };
-
     /* Base class for a config file */
     class CConfig {
       public:
@@ -90,6 +97,10 @@ namespace Hyprlang {
            This has to be done before commence()
            Value provided becomes default */
         void addConfigValue(const char* name, const CConfigValue value);
+
+        /* Register a handler. Can be called anytime, though not recommended
+           to do this dynamically */
+        void registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options);
 
         /* Commence the config state. Config becomes immutable, as in
            no new values may be added or removed. Required for parsing. */

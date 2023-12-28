@@ -10,6 +10,26 @@
         std::cout << "Passed " << #expr << ". Got " << val << "\n";                                                                                                                \
     }
 
+// globals for testing
+bool                          barrelRoll = false;
+std::string                   flagsFound = "";
+
+static Hyprlang::CParseResult handleDoABarrelRoll(const char* COMMAND, const char* VALUE) {
+    if (std::string(VALUE) == "woohoo, some, params")
+        barrelRoll = true;
+
+    Hyprlang::CParseResult result;
+    return result;
+}
+
+static Hyprlang::CParseResult handleFlagsTest(const char* COMMAND, const char* VALUE) {
+    std::string cmd = COMMAND;
+    flagsFound      = cmd.substr(5);
+
+    Hyprlang::CParseResult result;
+    return result;
+}
+
 int main(int argc, char** argv, char** envp) {
     int ret = 0;
 
@@ -32,6 +52,9 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testCategory:testColor1", 0L);
         config.addConfigValue("testCategory:testColor2", 0L);
         config.addConfigValue("testCategory:testColor3", 0L);
+
+        config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
+        config.registerHandler(&handleFlagsTest, "flags", {true});
 
         config.commence();
 
@@ -58,6 +81,10 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor1")), 0xFFFFFFFFL);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), 0xFF000000L);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), 0x22ffeeffL);
+
+        // test handlers
+        EXPECT(barrelRoll, true);
+        EXPECT(flagsFound, std::string{"abc"});
     } catch (const char* e) {
         std::cout << "Error: " << e << "\n";
         return 1;
