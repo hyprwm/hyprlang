@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/hyprlang.hpp")
 
-add_library(hyprlang ${SRCFILES})
+add_library(hyprlang SHARED ${SRCFILES})
 target_include_directories( hyprlang
     PUBLIC "./include"
     PRIVATE "./src"
