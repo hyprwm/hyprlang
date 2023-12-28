@@ -3,15 +3,14 @@
   stdenv,
   cmake,
   version ? "git",
+  doCheck ? false,
 }:
 stdenv.mkDerivation {
   pname = "hyprlang";
-  inherit version;
+  inherit version doCheck;
   src = ../.;
 
   nativeBuildInputs = [cmake];
-
-  doCheck = true;
 
   meta = with lib; {
     homepage = "https://github.com/hyprwm/hyprlang";

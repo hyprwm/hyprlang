@@ -3,6 +3,12 @@ name: Build & Test
 on: [push, pull_request, workflow_dispatch]
 jobs:
   nix:
+    strategy:
+      matrix:
+        package:
+          - hyprlang
+          - hyprlang-with-tests
+
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -17,5 +23,5 @@ jobs:
     #     authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
     - name: Build & Test
-      run: nix build --print-build-logs
+      run: nix build .#${{ matrix.package }} --print-build-logs
 
