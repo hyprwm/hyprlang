@@ -1,4 +1,5 @@
 #include <iostream>
+#include <filesystem>
 
 #include <hyprlang.hpp>
 
@@ -21,8 +22,10 @@ namespace Colors {
     }
 
 // globals for testing
-bool                          barrelRoll = false;
-std::string                   flagsFound = "";
+bool                          barrelRoll  = false;
+std::string                   flagsFound  = "";
+Hyprlang::CConfig*            pConfig     = nullptr;
+std::string                   currentPath = "";
 
 static Hyprlang::CParseResult handleDoABarrelRoll(const char* COMMAND, const char* VALUE) {
     if (std::string(VALUE) == "woohoo, some, params")
@@ -40,6 +43,11 @@ static Hyprlang::CParseResult handleFlagsTest(const char* COMMAND, const char* V
     return result;
 }
 
+static Hyprlang::CParseResult handleSource(const char* COMMAND, const char* VALUE) {
+    std::string PATH = std::filesystem::canonical(currentPath + "/" + VALUE);
+    return pConfig->parseFile(PATH);
+}
+
 int main(int argc, char** argv, char** envp) {
     int ret = 0;
 
@@ -47,6 +55,8 @@ int main(int argc, char** argv, char** envp) {
         std::cout << "Starting test\n";
 
         Hyprlang::CConfig config("./config/config.conf");
+        pConfig     = &config;
+        currentPath = std::filesystem::canonical("./config/");
 
         // setup config
         config.addConfigValue("testInt", 0L);
@@ -64,9 +74,13 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testCategory:testColor1", 0L);
         config.addConfigValue("testCategory:testColor2", 0L);
         config.addConfigValue("testCategory:testColor3", 0L);
+        config.addConfigValue("myColors:pink", 0L);
+        config.addConfigValue("myColors:green", 0L);
+        config.addConfigValue("myColors:random", 0L);
 
         config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
         config.registerHandler(&handleFlagsTest, "flags", {true});
+        config.registerHandler(&handleSource, "source", {false});
 
         config.addSpecialCategory("special", {"key"});
         config.addSpecialConfigValue("special", "value", 0L);
@@ -135,6 +149,12 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "b")), 2);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "value")), 1);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:two", "value")), 2);
+
+        // test sourcing
+        std::cout << " → Testing sourcing\n";
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:pink")), 0xFFc800c8L);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:green")), 0xFF14f014L);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:random")), 0xFFFF1337L);
 
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";

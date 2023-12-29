@@ -132,6 +132,10 @@ namespace Hyprlang {
         /* Parse the config. Refresh the values. */
         CParseResult parse();
 
+        /* Same as parse(), but parse a specific file, without any refreshing. 
+           recommended to use for stuff like source = path.conf */
+        CParseResult parseFile(std::string file);
+
         /* Parse a single "line", dynamically. 
            Values set by this are temporary and will be overwritten 
            by default / config on the next parse() */

@@ -474,14 +474,22 @@ CParseResult CConfig::parse() {
         sc->applyDefaults();
     }
 
-    std::ifstream iffile(impl->path);
-    if (!iffile.good())
-        throw "Config file failed to open";
+    CParseResult fileParseResult = parseFile(impl->path);
 
-    std::string  line    = "";
-    int          linenum = 1;
+    return fileParseResult;
+}
 
-    CParseResult fileParseResult;
+CParseResult CConfig::parseFile(std::string file) {
+    CParseResult  result;
+
+    std::ifstream iffile(file);
+    if (!iffile.good()) {
+        result.setError("File failed to open");
+        return result;
+    }
+
+    std::string line    = "";
+    int         linenum = 1;
 
     while (std::getline(iffile, line)) {
 
@@ -489,7 +497,7 @@ CParseResult CConfig::parse() {
 
         if (RET.error && impl->parseError.empty()) {
             impl->parseError = RET.getError();
-            fileParseResult.setError(std::format("Config error at line {}: {}", linenum, RET.errorStdString));
+            result.setError(std::format("Config error in file {} at line {}: {}", file, linenum, RET.errorStdString));
         }
 
         ++linenum;
@@ -498,12 +506,11 @@ CParseResult CConfig::parse() {
     iffile.close();
 
     if (!impl->categories.empty()) {
-        fileParseResult.setError("Unclosed category at EOF");
+        result.setError("Unclosed category at EOF");
         impl->categories.clear();
-        return fileParseResult;
     }
 
-    return fileParseResult;
+    return result;
 }
 
 CParseResult CConfig::parseDynamic(const char* line) {
