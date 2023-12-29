@@ -118,7 +118,7 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 1337420);
 
         // test env variables
-        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEnv")), std::string{"wayland"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEnv")), std::string{getenv("SHELL")});
 
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
