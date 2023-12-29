@@ -15,9 +15,15 @@ target_include_directories( hyprlang
     PUBLIC "./include"
     PRIVATE "./src"
 )
+set_target_properties(hyprlang PROPERTIES PUBLIC_HEADER include/hyprlang.hpp)
 
 install(TARGETS hyprlang)
 
 add_executable(hyprlang_test "tests/main.cpp")
 target_link_libraries(hyprlang_test PRIVATE hyprlang)
 add_test(NAME "Parsing" WORKING_DIRECTORY "../tests/" COMMAND hyprlang_test "parse")
+
+# Installation
+install(TARGETS hyprlang
+        PUBLIC_HEADER DESTINATION include
+        LIBRARY DESTINATION lib)
