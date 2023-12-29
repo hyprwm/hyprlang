@@ -21,8 +21,11 @@ bakery {
     }
 }
 
+# variable
+$NUM_ORDERS = 3
+
 cakes {
-    number = 3                              # int
+    number = $NUM_ORDERS                    # use a variable
     colors = red, green, blue               # string
 }
 
