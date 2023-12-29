@@ -30,6 +30,7 @@ jobs:
           rm -rf ./build
           CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
           CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+          CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --build ./build --config Release --target hyprlang_test -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
 
       - name: Run tests
         run: |
@@ -52,17 +53,18 @@ jobs:
           pacman --noconfirm --noprogressbar -Syyu
           pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang
 
-      - name: Build with gcc
+      - name: Build with clang
         run: |
           CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
           CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
           cp ./build/libhyprlang.so /usr/lib
 
-      - name: Build with clang
+      - name: Build with gcc
         run: |
           rm -rf ./build
           CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
           CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+          CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --build ./build --config Release --target hyprlang_test -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
 
       - name: Run tests
         run: |
