@@ -53,6 +53,7 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testFloat", 0.F);
         config.addConfigValue("testVec", Hyprlang::SVector2D{69, 420});
         config.addConfigValue("testString", "");
+        config.addConfigValue("testVar", 0L);
         config.addConfigValue("testStringQuotes", "");
         config.addConfigValue("testCategory:testValueInt", 0L);
         config.addConfigValue("testCategory:testValueHex", 0xAL);
@@ -105,6 +106,10 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(barrelRoll, true);
         EXPECT(config.parseDynamic("testCategory:testValueHex", "0xaabbccdd").error, false);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), 0xAABBCCDDL);
+
+        // test variables
+        std::cout << " → Testing variables\n";
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 13371337);
 
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";

@@ -10,6 +10,11 @@ struct SHandler {
     Hyprlang::PCONFIGHANDLERFUNC func = nullptr;
 };
 
+struct SVariable {
+    std::string name  = "";
+    std::string value = "";
+};
+
 class CConfigImpl {
   public:
     std::string                                             path = "";
@@ -17,6 +22,7 @@ class CConfigImpl {
     std::unordered_map<std::string, Hyprlang::CConfigValue> values;
     std::unordered_map<std::string, Hyprlang::CConfigValue> defaultValues;
     std::vector<SHandler>                                   handlers;
+    std::vector<SVariable>                                  variables;
 
     std::vector<std::string>                                categories;
 

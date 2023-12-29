@@ -80,6 +80,16 @@ static bool isNumber(const std::string& str, bool allowfloat) {
     return true;
 }
 
+static void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if (from.empty())
+        return;
+    size_t pos = 0;
+    while ((pos = str.find(from, pos)) != std::string::npos) {
+        str.replace(pos, from.length(), to);
+        pos += to.length();
+    }
+}
+
 static int64_t configStringToInt(const std::string& VALUE) {
     if (VALUE.starts_with("0x")) {
         // Values with 0x are hex
@@ -155,7 +165,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
     const auto VALUEIT = impl->values.find(valueName);
     if (VALUEIT == impl->values.end()) {
-        result.setError("config option doesn't exist");
+        result.setError(std::format("config option <{}> does not exist.", valueName));
         return result;
     }
 
@@ -209,6 +219,13 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
     return result;
 }
 
+CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& rhs) {
+    impl->variables.push_back({lhs.substr(1), rhs});
+    std::sort(impl->variables.begin(), impl->variables.end(), [](const auto& lhs, const auto& rhs) { return lhs.name.length() > rhs.name.length(); });
+    CParseResult result;
+    return result;
+}
+
 CParseResult CConfig::parseLine(std::string line) {
     CParseResult result;
 
@@ -245,10 +262,45 @@ CParseResult CConfig::parseLine(std::string line) {
     if (equalsPos != std::string::npos) {
         // set value or call handler
         CParseResult ret;
-        const auto   LHS = removeBeginEndSpacesTabs(line.substr(0, equalsPos));
-        const auto   RHS = removeBeginEndSpacesTabs(line.substr(equalsPos + 1));
+        auto         LHS = removeBeginEndSpacesTabs(line.substr(0, equalsPos));
+        auto         RHS = removeBeginEndSpacesTabs(line.substr(equalsPos + 1));
 
-        bool         found = false;
+        if (LHS.empty()) {
+            result.setError("Empty lhs.");
+            return result;
+        }
+
+        if (*LHS.begin() == '$')
+            return parseVariable(LHS, RHS);
+
+        // limit unwrapping iterations to 100. if exceeds, raise error
+        for (size_t i = 0; i < 100; ++i) {
+            bool anyMatch = false;
+            for (auto& var : impl->variables) {
+                const auto LHSIT = LHS.find("$" + var.name);
+                const auto RHSIT = RHS.find("$" + var.name);
+
+                if (LHSIT != std::string::npos)
+                    replaceAll(LHS, "$" + var.name, var.value);
+                if (RHSIT != std::string::npos)
+                    replaceAll(RHS, "$" + var.name, var.value);
+
+                if (RHSIT == std::string::npos && LHSIT == std::string::npos)
+                    break;
+
+                anyMatch = true;
+            }
+
+            if (!anyMatch)
+                break;
+
+            if (i == 99) {
+                result.setError("Expanding variables exceeded max iteration limit");
+                return result;
+            }
+        }
+
+        bool found = false;
         for (auto& h : impl->handlers) {
             if (!h.options.allowFlags && h.name != LHS)
                 continue;

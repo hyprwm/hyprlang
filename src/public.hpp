@@ -139,6 +139,7 @@ namespace Hyprlang {
 
         CParseResult parseLine(std::string line);
         CParseResult configSetValueSafe(const std::string& command, const std::string& value);
+        CParseResult parseVariable(const std::string& lhs, const std::string& rhs);
         void         clearState();
     };
 };
