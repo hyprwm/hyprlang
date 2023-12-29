@@ -52,19 +52,14 @@ int main(int argc, char** argv, char** envp) {
     int ret = 0;
 
     try {
+        if (!getenv("SHELL"))
+            setenv("SHELL", "/bin/sh", true);
+
         std::cout << "Starting test\n";
 
         Hyprlang::CConfig config("./config/config.conf");
-
-        try {
-            pConfig     = &config;
-            currentPath = std::filesystem::canonical("./config/");
-        } catch (std::logic_error& e) {
-            std::cout << "err " << e.what() << std::endl;
-            return 1;
-        }
-
-        std::cout << "start add" << std::endl;
+        pConfig     = &config;
+        currentPath = std::filesystem::canonical("./config/");
 
         // setup config
         config.addConfigValue("testInt", 0L);
