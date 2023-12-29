@@ -55,8 +55,16 @@ int main(int argc, char** argv, char** envp) {
         std::cout << "Starting test\n";
 
         Hyprlang::CConfig config("./config/config.conf");
-        pConfig     = &config;
-        currentPath = std::filesystem::canonical("./config/");
+
+        try {
+            pConfig     = &config;
+            currentPath = std::filesystem::canonical("./config/");
+        } catch (std::logic_error& e) {
+            std::cout << "err " << e.what() << std::endl;
+            return 1;
+        }
+
+        std::cout << "start add" << std::endl;
 
         // setup config
         config.addConfigValue("testInt", 0L);
