@@ -68,7 +68,15 @@ int main(int argc, char** argv, char** envp) {
         config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
         config.registerHandler(&handleFlagsTest, "flags", {true});
 
+        config.addSpecialCategory("special", {"key"});
+        config.addSpecialConfigValue("special", "value", 0L);
+
         config.commence();
+
+        config.addSpecialCategory("specialGeneric:one", {nullptr, true});
+        config.addSpecialConfigValue("specialGeneric:one", "value", 0L);
+        config.addSpecialCategory("specialGeneric:two", {nullptr, true});
+        config.addSpecialConfigValue("specialGeneric:two", "value", 0L);
 
         const auto PARSERESULT = config.parse();
         if (PARSERESULT.error) {
@@ -118,7 +126,15 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 1337420);
 
         // test env variables
+        std::cout << " → Testing env variables\n";
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testEnv")), std::string{getenv("SHELL")});
+
+        // test special categories
+        std::cout << " → Testing special categories\n";
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "a")), 1);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "b")), 2);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "value")), 1);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:two", "value")), 2);
 
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";

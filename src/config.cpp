@@ -59,6 +59,38 @@ void CConfig::addConfigValue(const char* name, const CConfigValue value) {
     impl->defaultValues[std::string{name}] = value;
 }
 
+void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CConfigValue value) {
+    const auto IT = std::find_if(impl->specialCategoryDescriptors.begin(), impl->specialCategoryDescriptors.end(), [&](const auto& other) { return other->name == cat; });
+
+    if (IT == impl->specialCategoryDescriptors.end())
+        throw "No such category";
+
+    IT->get()->defaultValues[std::string{name}] = value;
+}
+
+void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions options) {
+    const auto PDESC          = impl->specialCategoryDescriptors.emplace_back(std::make_unique<SSpecialCategoryDescriptor>()).get();
+    PDESC->name               = name;
+    PDESC->key                = options.key ? options.key : "";
+    PDESC->dontErrorOnMissing = options.ignoreMissing;
+
+    if (!options.key) {
+        const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
+        PCAT->descriptor = PDESC;
+        PCAT->name       = name;
+        PCAT->key        = options.key ? options.key : "";
+        PCAT->isStatic   = true;
+        if (!PCAT->key.empty())
+            addSpecialConfigValue(name, options.key, CConfigValue("0"));
+    }
+}
+
+void SSpecialCategory::applyDefaults() {
+    for (auto& [k, v] : descriptor->defaultValues) {
+        values[k] = v;
+    }
+}
+
 void CConfig::commence() {
     m_bCommenced = true;
     for (auto& [k, v] : impl->defaultValues) {
@@ -174,10 +206,62 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
     valueName += command;
 
-    const auto VALUEIT = impl->values.find(valueName);
+    auto VALUEIT = impl->values.find(valueName);
     if (VALUEIT == impl->values.end()) {
-        result.setError(std::format("config option <{}> does not exist.", valueName));
-        return result;
+        // it might be in a special category
+        bool found = false;
+        for (auto& sc : impl->specialCategories) {
+            if (!valueName.starts_with(sc->name) || valueName.substr(sc->name.length() + 1).contains(":"))
+                continue;
+
+            if (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != impl->currentSpecialKey)
+                continue;
+
+            VALUEIT = sc->values.find(valueName.substr(sc->name.length() + 1));
+
+            if (VALUEIT != sc->values.end())
+                found = true;
+            else if (sc->descriptor->dontErrorOnMissing)
+                return result; // will return a success, cuz we want to ignore missing
+
+            break;
+        }
+
+        if (!found) {
+            // could be a dynamic category that doesnt exist yet
+            for (auto& sc : impl->specialCategoryDescriptors) {
+                if (sc->key.empty() || !valueName.starts_with(sc->name) || valueName.substr(sc->name.length() + 1).contains(":"))
+                    continue;
+
+                // bingo
+                const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
+                PCAT->descriptor = sc.get();
+                PCAT->name       = sc->name;
+                PCAT->key        = sc->key;
+                addSpecialConfigValue(sc->name.c_str(), sc->key.c_str(), CConfigValue("0"));
+
+                PCAT->applyDefaults();
+
+                VALUEIT = PCAT->values.find(valueName.substr(sc->name.length() + 1));
+
+                if (VALUEIT != PCAT->values.end())
+                    found = true;
+
+                if (VALUEIT == PCAT->values.end() || VALUEIT->first != sc->key) {
+                    result.setError(std::format("special category's first value must be the key. Key for <{}> is <{}>", PCAT->name, PCAT->key));
+                    return result;
+                }
+
+                impl->currentSpecialKey = value;
+
+                break;
+            }
+        }
+
+        if (!found) {
+            result.setError(std::format("config option <{}> does not exist.", valueName));
+            return result;
+        }
     }
 
     switch (VALUEIT->second.m_eType) {
@@ -359,6 +443,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 return result;
             }
 
+            impl->currentSpecialKey = "";
             impl->categories.pop_back();
         } else {
             // open a category.
@@ -384,6 +469,9 @@ CParseResult CConfig::parse() {
 
     for (auto& [k, v] : impl->defaultValues) {
         impl->values.at(k) = v;
+    }
+    for (auto& sc : impl->specialCategories) {
+        sc->applyDefaults();
     }
 
     std::ifstream iffile(impl->path);
@@ -430,11 +518,31 @@ void CConfig::clearState() {
     impl->categories.clear();
     impl->parseError = "";
     impl->variables  = impl->envVariables;
+    std::erase_if(impl->specialCategories, [](const auto& e) { return !e->isStatic; });
 }
 
 CConfigValue* CConfig::getConfigValuePtr(const char* name) {
     const auto IT = impl->values.find(std::string{name});
     return IT == impl->values.end() ? nullptr : &IT->second;
+}
+
+CConfigValue* CConfig::getSpecialConfigValuePtr(const char* category, const char* name, const char* key) {
+    const std::string CAT  = category;
+    const std::string NAME = name;
+    const std::string KEY  = key ? key : "";
+
+    for (auto& sc : impl->specialCategories) {
+        if (sc->name != CAT || (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != KEY))
+            continue;
+
+        const auto IT = sc->values.find(NAME);
+        if (IT == sc->values.end())
+            return nullptr;
+
+        return &IT->second;
+    }
+
+    return nullptr;
 }
 
 void CConfig::registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options) {

@@ -44,8 +44,20 @@ namespace Hyprlang {
         friend class CConfig;
     };
 
+    /* Generic struct for options for handlers */
     struct SHandlerOptions {
         bool allowFlags = false;
+    };
+
+    /* Generic struct for options for special categories */
+    struct SSpecialCategoryOptions {
+        /* a key is the name of a value that will be the identifier of a special category
+           can be left null for no key, aka a generic one
+           keys are always strings. Default key value is "0" */
+        const char* key = nullptr;
+
+        /* don't pop up an error if the config value is missing */
+        bool ignoreMissing = false;
     };
 
     /* typedefs */
@@ -111,6 +123,12 @@ namespace Hyprlang {
            no new values may be added or removed. Required for parsing. */
         void commence();
 
+        /* Add a special category. Can be done dynamically. */
+        void addSpecialCategory(const char* name, SSpecialCategoryOptions options);
+
+        /* Add a config value to a special category */
+        void addSpecialConfigValue(const char* cat, const char* name, const CConfigValue value);
+
         /* Parse the config. Refresh the values. */
         CParseResult parse();
 
@@ -124,9 +142,23 @@ namespace Hyprlang {
            nullptr on fail */
         CConfigValue* getConfigValuePtr(const char* name);
 
+        /* Get a special category's config value ptr. These are only static for static (key-less)
+           categories, unless a new variable is added via addSpecialConfigValue.
+           key can be nullptr for static categories. Cannot be nullptr for id-based categories. 
+           nullptr on fail. */
+        CConfigValue* getSpecialConfigValuePtr(const char* category, const char* name, const char* key = nullptr);
+
         /* Get a config value's stored value. Empty on fail*/
         std::any getConfigValue(const char* name) {
             CConfigValue* val = getConfigValuePtr(name);
+            if (!val)
+                return {};
+            return val->getValue();
+        }
+
+        /* Get a special config value's stored value. Empty on fail. */
+        std::any getSpecialConfigValue(const char* category, const char* name, const char* key = nullptr) {
+            CConfigValue* val = getSpecialConfigValuePtr(category, name, key);
             if (!val)
                 return {};
             return val->getValue();
