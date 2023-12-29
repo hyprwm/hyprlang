@@ -7,6 +7,7 @@
 #include <cmath>
 
 using namespace Hyprlang;
+extern "C" char**  environ;
 
 static std::string removeBeginEndSpacesTabs(std::string str) {
     if (str.empty())
@@ -35,6 +36,16 @@ CConfig::CConfig(const char* path) {
 
     if (!std::filesystem::exists(impl->path))
         throw "File does not exist";
+
+    impl->envVariables.clear();
+    for (char** env = environ; *env; ++env) {
+        const std::string ENVVAR   = *env;
+        const auto        VARIABLE = ENVVAR.substr(0, ENVVAR.find_first_of('='));
+        const auto        VALUE    = ENVVAR.substr(ENVVAR.find_first_of('=') + 1);
+        impl->envVariables.push_back({VARIABLE, VALUE});
+    }
+
+    std::sort(impl->envVariables.begin(), impl->envVariables.end(), [&](const auto& a, const auto& b) { return a.name.length() > b.name.length(); });
 }
 
 CConfig::~CConfig() {
@@ -301,7 +312,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                     replaceAll(RHS, "$" + var.name, var.value);
 
                 if (RHSIT == std::string::npos && LHSIT == std::string::npos)
-                    break;
+                    continue;
                 else
                     var.linesContainingVar.push_back(line);
 
@@ -398,7 +409,11 @@ CParseResult CConfig::parse() {
 
     iffile.close();
 
-    clearState();
+    if (!impl->categories.empty()) {
+        fileParseResult.setError("Unclosed category at EOF");
+        impl->categories.clear();
+        return fileParseResult;
+    }
 
     return fileParseResult;
 }
@@ -414,6 +429,7 @@ CParseResult CConfig::parseDynamic(const char* command, const char* value) {
 void CConfig::clearState() {
     impl->categories.clear();
     impl->parseError = "";
+    impl->variables  = impl->envVariables;
 }
 
 CConfigValue* CConfig::getConfigValuePtr(const char* name) {

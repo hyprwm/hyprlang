@@ -53,6 +53,7 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testFloat", 0.F);
         config.addConfigValue("testVec", Hyprlang::SVector2D{69, 420});
         config.addConfigValue("testString", "");
+        config.addConfigValue("testEnv", "");
         config.addConfigValue("testVar", 0L);
         config.addConfigValue("testStringQuotes", "");
         config.addConfigValue("testCategory:testValueInt", 0L);
@@ -115,6 +116,9 @@ int main(int argc, char** argv, char** envp) {
         std::cout << " → Testing dynamic variables\n";
         EXPECT(config.parseDynamic("$MY_VAR_2 = 420").error, false);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 1337420);
+
+        // test env variables
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEnv")), std::string{"wayland"});
 
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";

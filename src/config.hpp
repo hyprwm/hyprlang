@@ -24,6 +24,7 @@ class CConfigImpl {
     std::unordered_map<std::string, Hyprlang::CConfigValue> defaultValues;
     std::vector<SHandler>                                   handlers;
     std::vector<SVariable>                                  variables;
+    std::vector<SVariable>                                  envVariables;
 
     std::vector<std::string>                                categories;
 
