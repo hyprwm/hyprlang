@@ -13,7 +13,7 @@ jobs:
         with:
           sparse-checkout: .github/actions
 
-      - name: Ger required pkgs
+      - name: Get required pkgs
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
@@ -30,7 +30,7 @@ jobs:
           rm -rf ./build
           CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
           CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
-          rm ./build/hyprlang.so
+          rm ./build/libhyprlang.so
 
       - name: Run tests
         run: |
@@ -47,7 +47,7 @@ jobs:
         with:
           sparse-checkout: .github/actions
 
-      - name: Ger required pkgs
+      - name: Get required pkgs
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
@@ -64,7 +64,7 @@ jobs:
           rm -rf ./build
           CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
           CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
-          rm ./build/hyprlang.so
+          rm ./build/libhyprlang.so
 
       - name: Run tests
         run: |
