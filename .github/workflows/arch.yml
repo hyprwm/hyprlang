@@ -35,7 +35,8 @@ jobs:
         run: |
           ./build/hyprlang_test
 
-  name: "clang build / gcc test"
+  clang:
+    name: "clang build / gcc test"
     runs-on: ubuntu-latest
     container:
       image: archlinux
