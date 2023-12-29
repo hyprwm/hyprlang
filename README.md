@@ -1,8 +1,21 @@
 # hyprlang
+
 The hypr configuration language is an extremely efficient, yet easy to work with, configuration language
 for linux applications.
 
 It's user-friendly, easy to grasp, and easy to implement.
+
+## Building and installation
+
+Building is done via CMake:
+```sh
+cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
+cmake --build ./build --config Release --target hyprlang -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+```
+Install with:
+```sh
+cmake --install ./build
+```
 
 ## Example config
 
