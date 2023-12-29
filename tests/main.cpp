@@ -52,6 +52,9 @@ int main(int argc, char** argv, char** envp) {
     int ret = 0;
 
     try {
+        if (!getenv("SHELL"))
+            setenv("SHELL", "/bin/sh", true);
+
         std::cout << "Starting test\n";
 
         Hyprlang::CConfig config("./config/config.conf");

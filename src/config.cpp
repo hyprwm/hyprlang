@@ -39,7 +39,7 @@ CConfig::CConfig(const char* path) {
 
     impl->envVariables.clear();
     for (char** env = environ; *env; ++env) {
-        const std::string ENVVAR   = *env;
+        const std::string ENVVAR   = *env ? *env : "";
         const auto        VARIABLE = ENVVAR.substr(0, ENVVAR.find_first_of('='));
         const auto        VALUE    = ENVVAR.substr(ENVVAR.find_first_of('=') + 1);
         impl->envVariables.push_back({VARIABLE, VALUE});
