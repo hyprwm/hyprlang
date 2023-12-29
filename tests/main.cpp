@@ -2,12 +2,22 @@
 
 #include <hyprlang.hpp>
 
+namespace Colors {
+    constexpr const char* RED     = "\x1b[31m";
+    constexpr const char* GREEN   = "\x1b[32m";
+    constexpr const char* YELLOW  = "\x1b[33m";
+    constexpr const char* BLUE    = "\x1b[34m";
+    constexpr const char* MAGENTA = "\x1b[35m";
+    constexpr const char* CYAN    = "\x1b[36m";
+    constexpr const char* RESET   = "\x1b[0m";
+};
+
 #define EXPECT(expr, val)                                                                                                                                                          \
     if (const auto RESULT = expr; RESULT != (val)) {                                                                                                                               \
-        std::cout << "Failed: " << #expr << ", expected " << #val << " but got " << RESULT << "\n";                                                                                \
+        std::cout << Colors::RED << "Failed: " << Colors::RESET << #expr << ", expected " << #val << " but got " << RESULT << "\n";                                                \
         ret = 1;                                                                                                                                                                   \
     } else {                                                                                                                                                                       \
-        std::cout << "Passed " << #expr << ". Got " << val << "\n";                                                                                                                \
+        std::cout << Colors::GREEN << "Passed " << Colors::RESET << #expr << ". Got " << val << "\n";                                                                              \
     }
 
 // globals for testing
@@ -67,6 +77,7 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(PARSERESULT.error, false);
 
         // test values
+        std::cout << " → Testing values\n";
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testInt")), 123);
         EXPECT(std::any_cast<float>(config.getConfigValue("testFloat")), 123.456f);
         auto EXP = Hyprlang::SVector2D{69, 420};
@@ -83,10 +94,20 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), 0x22ffeeffL);
 
         // test handlers
+        std::cout << " → Testing handlers\n";
         EXPECT(barrelRoll, true);
         EXPECT(flagsFound, std::string{"abc"});
+
+        // test dynamic
+        std::cout << " → Testing dynamic\n";
+        barrelRoll = false;
+        EXPECT(config.parseDynamic("doABarrelRoll = woohoo, some, params").error, false);
+        EXPECT(barrelRoll, true);
+        EXPECT(config.parseDynamic("testCategory:testValueHex", "0xaabbccdd").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), 0xAABBCCDDL);
+
     } catch (const char* e) {
-        std::cout << "Error: " << e << "\n";
+        std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
         return 1;
     }
 

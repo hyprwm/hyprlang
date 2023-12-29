@@ -55,7 +55,7 @@ void CConfig::commence() {
     }
 }
 
-bool isNumber(const std::string& str, bool allowfloat) {
+static bool isNumber(const std::string& str, bool allowfloat) {
 
     std::string copy = str;
     if (*copy.begin() == '-')
@@ -80,7 +80,7 @@ bool isNumber(const std::string& str, bool allowfloat) {
     return true;
 }
 
-int64_t configStringToInt(const std::string& VALUE) {
+static int64_t configStringToInt(const std::string& VALUE) {
     if (VALUE.starts_with("0x")) {
         // Values with 0x are hex
         const auto VALUEWITHOUTHEX = VALUE.substr(2);
@@ -300,7 +300,7 @@ CParseResult CConfig::parse() {
     if (!m_bCommenced)
         throw "Cannot parse: not commenced. You have to .commence() first.";
 
-    impl->parseError = "";
+    clearState();
 
     for (auto& [k, v] : impl->defaultValues) {
         impl->values.at(k) = v;
@@ -329,7 +329,22 @@ CParseResult CConfig::parse() {
 
     iffile.close();
 
+    clearState();
+
     return fileParseResult;
+}
+
+CParseResult CConfig::parseDynamic(const char* line) {
+    return parseLine(line);
+}
+
+CParseResult CConfig::parseDynamic(const char* command, const char* value) {
+    return parseLine(std::string{command} + "=" + std::string{value});
+}
+
+void CConfig::clearState() {
+    impl->categories.clear();
+    impl->parseError = "";
 }
 
 CConfigValue* CConfig::getConfigValuePtr(const char* name) {

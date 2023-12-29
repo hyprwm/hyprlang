@@ -24,10 +24,15 @@ namespace Hyprlang {
 
     class CParseResult {
       public:
-        bool        error = false;
+        bool error = false;
+        /* Get this ParseResult's error string.
+           Pointer valid until the error string is changed or this
+           object gets destroyed. */
         const char* getError() const {
             return errorString;
         }
+        /* Set an error contained by this ParseResult.
+           Creates a copy of the string, does not take ownership. */
         void setError(const char* err);
 
       private:
@@ -109,6 +114,12 @@ namespace Hyprlang {
         /* Parse the config. Refresh the values. */
         CParseResult parse();
 
+        /* Parse a single "line", dynamically. 
+           Values set by this are temporary and will be overwritten 
+           by default / config on the next parse() */
+        CParseResult parseDynamic(const char* line);
+        CParseResult parseDynamic(const char* command, const char* value);
+
         /* Get a config's value ptr. These are static.
            nullptr on fail */
         CConfigValue* getConfigValuePtr(const char* name);
@@ -128,5 +139,6 @@ namespace Hyprlang {
 
         CParseResult parseLine(std::string line);
         CParseResult configSetValueSafe(const std::string& command, const std::string& value);
+        void         clearState();
     };
 };
