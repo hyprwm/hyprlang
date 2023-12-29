@@ -30,11 +30,10 @@ jobs:
           rm -rf ./build
           CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
           CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
-          CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --build ./build --config Release --target hyprlang_test -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
 
       - name: Run tests
         run: |
-          ./build/hyprlang_test
+          cd ./tests && ../build/hyprlang_test
 
   clang:
     name: "clang build / gcc test"
@@ -64,8 +63,7 @@ jobs:
           rm -rf ./build
           CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
           CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
-          CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --build ./build --config Release --target hyprlang_test -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
 
       - name: Run tests
         run: |
-          ./build/hyprlang_test
+          cd ./tests && ../build/hyprlang_test
