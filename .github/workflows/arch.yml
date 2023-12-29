@@ -21,15 +21,15 @@ jobs:
 
       - name: Build with gcc
         run: |
-          CC="/usr/bin/g++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
-          CC="/usr/bin/g++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+          CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
+          CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
           cp ./build/libhyprlang.so /usr/lib
 
       - name: Build with clang
         run: |
           rm -rf ./build
-          CC="/usr/bin/clang" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
-          CC="/usr/bin/clang" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+          CXX="/usr/bin/clang" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
+          CXX="/usr/bin/clang" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
 
       - name: Run tests
         run: |
@@ -54,15 +54,15 @@ jobs:
 
       - name: Build with gcc
         run: |
-          CC="/usr/bin/clang" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
-          CC="/usr/bin/clang" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+          CXX="/usr/bin/clang" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
+          CXX="/usr/bin/clang" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
           cp ./build/libhyprlang.so /usr/lib
 
       - name: Build with clang
         run: |
           rm -rf ./build
-          CC="/usr/bin/g++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
-          CC="/usr/bin/g++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
+          CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build
+          CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
 
       - name: Run tests
         run: |
