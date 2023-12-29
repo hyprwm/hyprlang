@@ -52,11 +52,19 @@ CConfig::~CConfig() {
     delete impl;
 }
 
-void CConfig::addConfigValue(const char* name, const CConfigValue value) {
+void CConfig::addConfigValue(const char* name, const CConfigValue& value) {
     if (m_bCommenced)
         throw "Cannot addConfigValue after commence()";
 
-    impl->defaultValues[std::string{name}] = value;
+    if ((eDataType)value.m_eType != CONFIGDATATYPE_CUSTOM && (eDataType)value.m_eType != CONFIGDATATYPE_STR)
+        impl->defaultValues.emplace(name, SConfigDefaultValue{value.getValue(), (eDataType)value.m_eType});
+    else if ((eDataType)value.m_eType == CONFIGDATATYPE_STR)
+        impl->defaultValues.emplace(name, SConfigDefaultValue{std::string{std::any_cast<const char*>(value.getValue())}, (eDataType)value.m_eType});
+    else
+        impl->defaultValues.emplace(name,
+                                    SConfigDefaultValue{reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->defaultVal, (eDataType)value.m_eType,
+                                                        reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->handler,
+                                                        reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
 }
 
 void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CConfigValue value) {
@@ -65,7 +73,15 @@ void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CCo
     if (IT == impl->specialCategoryDescriptors.end())
         throw "No such category";
 
-    IT->get()->defaultValues[std::string{name}] = value;
+    if ((eDataType)value.m_eType != CONFIGDATATYPE_CUSTOM && (eDataType)value.m_eType != CONFIGDATATYPE_STR)
+        IT->get()->defaultValues.emplace(name, SConfigDefaultValue{value.getValue(), (eDataType)value.m_eType});
+    else if ((eDataType)value.m_eType == CONFIGDATATYPE_STR)
+        IT->get()->defaultValues.emplace(name, SConfigDefaultValue{std::string{std::any_cast<const char*>(value.getValue())}, (eDataType)value.m_eType});
+    else
+        IT->get()->defaultValues.emplace(name,
+                                         SConfigDefaultValue{reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->defaultVal, (eDataType)value.m_eType,
+                                                             reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->handler,
+                                                             reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
 }
 
 void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions options) {
@@ -85,16 +101,16 @@ void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions optio
     }
 }
 
-void SSpecialCategory::applyDefaults() {
-    for (auto& [k, v] : descriptor->defaultValues) {
-        values[k] = v;
+void CConfig::applyDefaultsToCat(SSpecialCategory& cat) {
+    for (auto& [k, v] : cat.descriptor->defaultValues) {
+        cat.values[k].defaultFrom(v);
     }
 }
 
 void CConfig::commence() {
     m_bCommenced = true;
     for (auto& [k, v] : impl->defaultValues) {
-        impl->values[k] = v;
+        impl->values[k].defaultFrom(v);
     }
 }
 
@@ -240,7 +256,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                 PCAT->key        = sc->key;
                 addSpecialConfigValue(sc->name.c_str(), sc->key.c_str(), CConfigValue("0"));
 
-                PCAT->applyDefaults();
+                applyDefaultsToCat(*PCAT);
 
                 VALUEIT = PCAT->values.find(valueName.substr(sc->name.length() + 1));
 
@@ -267,7 +283,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
     switch (VALUEIT->second.m_eType) {
         case CConfigValue::eDataType::CONFIGDATATYPE_INT: {
             try {
-                VALUEIT->second = {configStringToInt(value)};
+                VALUEIT->second.setFrom(configStringToInt(value));
             } catch (std::exception& e) {
                 result.setError(std::format("failed parsing an int: {}", e.what()));
                 return result;
@@ -276,7 +292,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
         }
         case CConfigValue::eDataType::CONFIGDATATYPE_FLOAT: {
             try {
-                VALUEIT->second = {std::stof(value)};
+                VALUEIT->second.setFrom(std::stof(value));
             } catch (std::exception& e) {
                 result.setError(std::format("failed parsing a float: {}", e.what()));
                 return result;
@@ -294,7 +310,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                 if (LHS.contains(" ") || RHS.contains(" "))
                     throw std::runtime_error("too many args");
 
-                VALUEIT->second = {SVector2D{std::stof(LHS), std::stof(RHS)}};
+                VALUEIT->second.setFrom(SVector2D{std::stof(LHS), std::stof(RHS)});
             } catch (std::exception& e) {
                 result.setError(std::format("failed parsing a vec2: {}", e.what()));
                 return result;
@@ -302,7 +318,11 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
             break;
         }
         case CConfigValue::eDataType::CONFIGDATATYPE_STR: {
-            VALUEIT->second = {value.c_str()};
+            VALUEIT->second.setFrom(value);
+            break;
+        }
+        case CConfigValue::eDataType::CONFIGDATATYPE_CUSTOM: {
+            reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->handler(value.c_str(), &reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->data);
             break;
         }
         default: {
@@ -468,10 +488,10 @@ CParseResult CConfig::parse() {
     clearState();
 
     for (auto& [k, v] : impl->defaultValues) {
-        impl->values.at(k) = v;
+        impl->values.at(k).defaultFrom(v);
     }
     for (auto& sc : impl->specialCategories) {
-        sc->applyDefaults();
+        applyDefaultsToCat(*sc);
     }
 
     CParseResult fileParseResult = parseFile(impl->path);

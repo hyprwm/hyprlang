@@ -16,11 +16,31 @@ struct SVariable {
     std::vector<std::string> linesContainingVar; // for dynamic updates
 };
 
+// remember to also edit CConfigValue if editing
+enum eDataType {
+    CONFIGDATATYPE_EMPTY,
+    CONFIGDATATYPE_INT,
+    CONFIGDATATYPE_FLOAT,
+    CONFIGDATATYPE_STR,
+    CONFIGDATATYPE_VEC2,
+    CONFIGDATATYPE_CUSTOM,
+};
+
+// CUSTOM is stored as STR!!
+struct SConfigDefaultValue {
+    std::any  data;
+    eDataType type = CONFIGDATATYPE_EMPTY;
+
+    // this sucks but I have no better idea
+    Hyprlang::PCONFIGCUSTOMVALUEHANDLERFUNC handler = nullptr;
+    Hyprlang::PCONFIGCUSTOMVALUEDESTRUCTOR  dtor    = nullptr;
+};
+
 struct SSpecialCategoryDescriptor {
-    std::string                                             name = "";
-    std::string                                             key  = "";
-    std::unordered_map<std::string, Hyprlang::CConfigValue> defaultValues;
-    bool                                                    dontErrorOnMissing = false;
+    std::string                                          name = "";
+    std::string                                          key  = "";
+    std::unordered_map<std::string, SConfigDefaultValue> defaultValues;
+    bool                                                 dontErrorOnMissing = false;
 };
 
 struct SSpecialCategory {
@@ -38,7 +58,7 @@ class CConfigImpl {
     std::string                                              path = "";
 
     std::unordered_map<std::string, Hyprlang::CConfigValue>  values;
-    std::unordered_map<std::string, Hyprlang::CConfigValue>  defaultValues;
+    std::unordered_map<std::string, SConfigDefaultValue>     defaultValues;
     std::vector<SHandler>                                    handlers;
     std::vector<SVariable>                                   variables;
     std::vector<SVariable>                                   envVariables;

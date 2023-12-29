@@ -9,6 +9,8 @@
 #include <fstream>
 
 class CConfigImpl;
+struct SConfigDefaultValue;
+struct SSpecialCategory;
 
 namespace Hyprlang {
 
@@ -66,8 +68,30 @@ namespace Hyprlang {
 
     /* typedefs */
     typedef CParseResult (*PCONFIGHANDLERFUNC)(const char* COMMAND, const char* VALUE);
+    typedef CParseResult (*PCONFIGCUSTOMVALUEHANDLERFUNC)(const char* VALUE, void** data);
+    typedef void (*PCONFIGCUSTOMVALUEDESTRUCTOR)(void** data);
 
-    struct SConfigValueImpl;
+    /* Container for a custom config value type 
+       When creating, pass your handler.
+       Handler will receive a void** that points to a void* that you can set to your own
+       thing. Pass a dtor to free whatever you allocated when the custom value type is being released.
+       data may always be pointing to a nullptr. 
+    */
+    class CConfigCustomValueType {
+      public:
+        CConfigCustomValueType(PCONFIGCUSTOMVALUEHANDLERFUNC handler_, PCONFIGCUSTOMVALUEDESTRUCTOR dtor_, const char* defaultValue);
+        ~CConfigCustomValueType();
+
+      private:
+        PCONFIGCUSTOMVALUEHANDLERFUNC handler    = nullptr;
+        PCONFIGCUSTOMVALUEDESTRUCTOR  dtor       = nullptr;
+        void*                         data       = nullptr;
+        std::string                   defaultVal = "";
+
+        friend class CConfigValue;
+        friend class CConfig;
+    };
+
     /* Container for a config value */
     class CConfigValue {
       public:
@@ -76,9 +100,11 @@ namespace Hyprlang {
         CConfigValue(const float value);
         CConfigValue(const char* value);
         CConfigValue(const SVector2D value);
-        CConfigValue(const CConfigValue&);
-        CConfigValue(CConfigValue&&);
-        void operator=(const CConfigValue&);
+        CConfigValue(CConfigCustomValueType&& value);
+        CConfigValue(const CConfigValue&)  = delete;
+        CConfigValue(CConfigValue&&)       = delete;
+        CConfigValue(const CConfigValue&&) = delete;
+        CConfigValue(CConfigValue&)        = delete;
         ~CConfigValue();
 
         void*    dataPtr() const;
@@ -89,21 +115,26 @@ namespace Hyprlang {
                 case CONFIGDATATYPE_FLOAT: return std::any(*reinterpret_cast<float*>(m_pData));
                 case CONFIGDATATYPE_STR: return std::any(reinterpret_cast<const char*>(m_pData));
                 case CONFIGDATATYPE_VEC2: return std::any(*reinterpret_cast<SVector2D*>(m_pData));
+                case CONFIGDATATYPE_CUSTOM: return std::any(reinterpret_cast<CConfigCustomValueType*>(m_pData)->data);
                 default: throw;
             }
             return {}; // unreachable
         }
 
       private:
+        // remember to also edit config.hpp if editing
         enum eDataType {
             CONFIGDATATYPE_EMPTY,
             CONFIGDATATYPE_INT,
             CONFIGDATATYPE_FLOAT,
             CONFIGDATATYPE_STR,
             CONFIGDATATYPE_VEC2,
+            CONFIGDATATYPE_CUSTOM,
         };
         eDataType m_eType = eDataType::CONFIGDATATYPE_EMPTY;
         void*     m_pData = nullptr;
+        void      defaultFrom(SConfigDefaultValue& ref);
+        void      setFrom(std::any value);
 
         friend class CConfig;
     };
@@ -117,7 +148,7 @@ namespace Hyprlang {
         /* Add a config value, for example myCategory:myValue. 
            This has to be done before commence()
            Value provided becomes default */
-        void addConfigValue(const char* name, const CConfigValue value);
+        void addConfigValue(const char* name, const CConfigValue& value);
 
         /* Register a handler. Can be called anytime, though not recommended
            to do this dynamically */
@@ -181,6 +212,7 @@ namespace Hyprlang {
         CParseResult configSetValueSafe(const std::string& command, const std::string& value);
         CParseResult parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic = false);
         void         clearState();
+        void         applyDefaultsToCat(SSpecialCategory& cat);
     };
 };
 #endif

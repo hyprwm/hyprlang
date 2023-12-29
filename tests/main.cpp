@@ -48,6 +48,24 @@ static Hyprlang::CParseResult handleSource(const char* COMMAND, const char* VALU
     return pConfig->parseFile(PATH);
 }
 
+static Hyprlang::CParseResult handleCustomValueSet(const char* VALUE, void** data) {
+    if (!*data)
+        *data = calloc(1, sizeof(int64_t));
+    std::string V = VALUE;
+    if (V == "abc")
+        *reinterpret_cast<int64_t*>(*data) = 1;
+    else
+        *reinterpret_cast<int64_t*>(*data) = 2;
+
+    Hyprlang::CParseResult result;
+    return result;
+}
+
+static void handleCustomValueDestroy(void** data) {
+    if (*data)
+        free(*data);
+}
+
 int main(int argc, char** argv, char** envp) {
     int ret = 0;
 
@@ -80,6 +98,7 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("myColors:pink", 0L);
         config.addConfigValue("myColors:green", 0L);
         config.addConfigValue("myColors:random", 0L);
+        config.addConfigValue("customType", {Hyprlang::CConfigCustomValueType{&handleCustomValueSet, &handleCustomValueDestroy, "def"}});
 
         config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
         config.registerHandler(&handleFlagsTest, "flags", {true});
@@ -158,6 +177,10 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:pink")), 0xFFc800c8L);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:green")), 0xFF14f014L);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:random")), 0xFFFF1337L);
+
+        // test custom type
+        std::cout << " → Testing custom types\n";
+        EXPECT(*reinterpret_cast<int64_t*>(std::any_cast<void*>(config.getConfigValue("customType"))), 1L);
 
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
