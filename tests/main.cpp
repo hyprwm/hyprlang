@@ -111,6 +111,11 @@ int main(int argc, char** argv, char** envp) {
         std::cout << " → Testing variables\n";
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 13371337);
 
+        // test dynamic variables
+        std::cout << " → Testing dynamic variables\n";
+        EXPECT(config.parseDynamic("$MY_VAR_2 = 420").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 1337420);
+
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
         return 1;

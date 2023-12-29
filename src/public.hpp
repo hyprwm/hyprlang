@@ -137,9 +137,9 @@ namespace Hyprlang {
 
         CConfigImpl* impl;
 
-        CParseResult parseLine(std::string line);
+        CParseResult parseLine(std::string line, bool dynamic = false);
         CParseResult configSetValueSafe(const std::string& command, const std::string& value);
-        CParseResult parseVariable(const std::string& lhs, const std::string& rhs);
+        CParseResult parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic = false);
         void         clearState();
     };
 };

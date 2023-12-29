@@ -219,14 +219,29 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
     return result;
 }
 
-CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& rhs) {
-    impl->variables.push_back({lhs.substr(1), rhs});
-    std::sort(impl->variables.begin(), impl->variables.end(), [](const auto& lhs, const auto& rhs) { return lhs.name.length() > rhs.name.length(); });
+CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic) {
+    auto IT = std::find_if(impl->variables.begin(), impl->variables.end(), [&](const auto& v) { return v.name == lhs.substr(1); });
+
+    if (IT != impl->variables.end())
+        IT->value = rhs;
+    else {
+        impl->variables.push_back({lhs.substr(1), rhs});
+        std::sort(impl->variables.begin(), impl->variables.end(), [](const auto& lhs, const auto& rhs) { return lhs.name.length() > rhs.name.length(); });
+    }
+
+    if (dynamic) {
+        if (IT == impl->variables.end())
+            IT = std::find_if(impl->variables.begin(), impl->variables.end(), [&](const auto& v) { return v.name == lhs.substr(1); });
+        for (auto& l : IT->linesContainingVar) {
+            parseLine(l, true);
+        }
+    }
+
     CParseResult result;
     return result;
 }
 
-CParseResult CConfig::parseLine(std::string line) {
+CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     CParseResult result;
 
     auto         commentPos  = line.find('#');
@@ -271,7 +286,7 @@ CParseResult CConfig::parseLine(std::string line) {
         }
 
         if (*LHS.begin() == '$')
-            return parseVariable(LHS, RHS);
+            return parseVariable(LHS, RHS, dynamic);
 
         // limit unwrapping iterations to 100. if exceeds, raise error
         for (size_t i = 0; i < 100; ++i) {
@@ -287,6 +302,8 @@ CParseResult CConfig::parseLine(std::string line) {
 
                 if (RHSIT == std::string::npos && LHSIT == std::string::npos)
                     break;
+                else
+                    var.linesContainingVar.push_back(line);
 
                 anyMatch = true;
             }
@@ -387,11 +404,11 @@ CParseResult CConfig::parse() {
 }
 
 CParseResult CConfig::parseDynamic(const char* line) {
-    return parseLine(line);
+    return parseLine(line, true);
 }
 
 CParseResult CConfig::parseDynamic(const char* command, const char* value) {
-    return parseLine(std::string{command} + "=" + std::string{value});
+    return parseLine(std::string{command} + "=" + std::string{value}, true);
 }
 
 void CConfig::clearState() {

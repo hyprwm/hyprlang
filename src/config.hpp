@@ -11,8 +11,9 @@ struct SHandler {
 };
 
 struct SVariable {
-    std::string name  = "";
-    std::string value = "";
+    std::string              name  = "";
+    std::string              value = "";
+    std::vector<std::string> linesContainingVar; // for dynamic updates
 };
 
 class CConfigImpl {
