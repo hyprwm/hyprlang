@@ -50,4 +50,4 @@ add_baker = Koichi, 18, Morioh
 
 ## Docs
 
-Soon:tm:
+Visit [hyprland.org/hyprlang](https://hyprland.org/hyprlang) to see the documentation.
