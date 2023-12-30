@@ -106,6 +106,6 @@ jobs:
           echo "$PK" > ./pk
           chmod 400 ./pk
           eval $(ssh-agent -s) && ssh-add ./pk
-          scp -O -o "StrictHostKeyChecking=no" -P $PT -r ./doxygen/* $AD:.$PH
+          scp -O -o "StrictHostKeyChecking=no" -P $PT -r ./doxygen/html/* $AD:.$PH
 
 
