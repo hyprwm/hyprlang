@@ -99,7 +99,7 @@ jobs:
       - name: Deploy
         env:
           PK: ${{ secrets.UPDATE_DOCS_PK }}
-          PT: ${{ secrets.DEPLOY_PORT }}
+          PT: ${{ secrets.DEPLOY_PORT5 }}
           AD: ${{ secrets.DEPLOY_USER }}
           PH: ${{ secrets.DEPLOY_PATH }}
         run: |
