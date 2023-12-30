@@ -107,6 +107,7 @@ jobs:
           cat >> ./pk << EOF
           $PK
           EOF
+          chmod 400 ./pk
           eval $(ssh-agent -s) &&  ssh-add ./pk
           scp -P $PT -r ./doxygen/* $AD:.$PH
 
