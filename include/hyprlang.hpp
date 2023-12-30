@@ -50,6 +50,15 @@ namespace Hyprlang {
         friend class CConfig;
     };
 
+    /* Generic struct for options for the config parser */
+    struct SConfigOptions {
+        /* Don't throw errors on missing values. */
+        bool verifyOnly = false;
+
+        /* Return all errors instead of the first */
+        bool throwAllErrors = false;
+    };
+
     /* Generic struct for options for handlers */
     struct SHandlerOptions {
         bool allowFlags = false;
@@ -142,7 +151,7 @@ namespace Hyprlang {
     /* Base class for a config file */
     class CConfig {
       public:
-        CConfig(const char* configPath);
+        CConfig(const char* configPath, const SConfigOptions& options);
         ~CConfig();
 
         /* Add a config value, for example myCategory:myValue. 

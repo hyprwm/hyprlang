@@ -69,4 +69,6 @@ class CConfigImpl {
     std::string                                              currentSpecialKey = "";
 
     std::string                                              parseError = "";
+
+    Hyprlang::SConfigOptions                                 configOptions;
 };

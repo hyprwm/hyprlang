@@ -28,7 +28,7 @@ static std::string removeBeginEndSpacesTabs(std::string str) {
     return str;
 }
 
-CConfig::CConfig(const char* path) {
+CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options) {
     impl = new CConfigImpl;
     try {
         impl->path = std::filesystem::canonical(path);
@@ -46,6 +46,8 @@ CConfig::CConfig(const char* path) {
     }
 
     std::sort(impl->envVariables.begin(), impl->envVariables.end(), [&](const auto& a, const auto& b) { return a.name.length() > b.name.length(); });
+
+    impl->configOptions = options;
 }
 
 CConfig::~CConfig() {
@@ -444,7 +446,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             found = true;
         }
 
-        if (!found)
+        if (!found && !impl->configOptions.verifyOnly)
             ret = configSetValueSafe(LHS, RHS);
 
         if (ret.error)
@@ -515,9 +517,11 @@ CParseResult CConfig::parseFile(std::string file) {
 
         const auto RET = parseLine(line);
 
-        if (RET.error && impl->parseError.empty()) {
-            impl->parseError = RET.getError();
-            result.setError(std::format("Config error in file {} at line {}: {}", file, linenum, RET.errorStdString));
+        if (RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
+            if (!impl->parseError.empty())
+                impl->parseError += "\n";
+            impl->parseError += std::format("Config error in file {} at line {}: {}", file, linenum, RET.errorStdString);
+            result.setError(impl->parseError);
         }
 
         ++linenum;
@@ -526,7 +530,13 @@ CParseResult CConfig::parseFile(std::string file) {
     iffile.close();
 
     if (!impl->categories.empty()) {
-        result.setError("Unclosed category at EOF");
+        if (impl->parseError.empty() || impl->configOptions.throwAllErrors) {
+            if (!impl->parseError.empty())
+                impl->parseError += "\n";
+            impl->parseError += std::format("Config error in file {}: Unclosed category at EOF", file);
+            result.setError(impl->parseError);
+        }
+
         impl->categories.clear();
     }
 

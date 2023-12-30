@@ -1,5 +1,6 @@
 #include <iostream>
 #include <filesystem>
+#include <algorithm>
 
 #include <hyprlang.hpp>
 
@@ -75,7 +76,7 @@ int main(int argc, char** argv, char** envp) {
 
         std::cout << "Starting test\n";
 
-        Hyprlang::CConfig config("./config/config.conf");
+        Hyprlang::CConfig config("./config/config.conf", {});
         pConfig     = &config;
         currentPath = std::filesystem::canonical("./config/");
 
@@ -181,6 +182,16 @@ int main(int argc, char** argv, char** envp) {
         // test custom type
         std::cout << " → Testing custom types\n";
         EXPECT(*reinterpret_cast<int64_t*>(std::any_cast<void*>(config.getConfigValue("customType"))), 1L);
+
+        std::cout << " → Testing error.conf\n";
+        Hyprlang::CConfig errorConfig("./config/error.conf", {.verifyOnly = true, .throwAllErrors = true});
+
+        errorConfig.commence();
+        const auto ERRORS = errorConfig.parse();
+
+        EXPECT(ERRORS.error, true);
+        const auto ERRORSTR = std::string{ERRORS.getError()};
+        EXPECT(std::count(ERRORSTR.begin(), ERRORSTR.end(), '\n'), 1);
 
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
