@@ -105,7 +105,7 @@ jobs:
         run: |
           echo "$PK" > ./pk
           chmod 400 ./pk
-          eval $(ssh-agent -s) && ssh-add ./pk
-          scp -O -o "StrictHostKeyChecking=no" -P $PT -r ./doxygen/html/* $AD:.$PH
+          eval $(ssh-agent -s) && ssh-add ./pk 2>&1 > /dev/null
+          scp -O -o "StrictHostKeyChecking=no" -q -o "LogLevel=QUIET" -P $PT -r ./doxygen/html/* $AD:.$PH 2>&1 > /dev/null
 
 
