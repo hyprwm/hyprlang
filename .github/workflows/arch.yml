@@ -72,6 +72,7 @@ jobs:
 
   doxygen:
     name: "Deploy docs"
+    runs-on: ubuntu-latest
     container:
       image: archlinux
     steps:
