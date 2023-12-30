@@ -11,3 +11,5 @@ CTestTestfile.cmake
 _deps
 .vscode
 build/
+doxygen/
+doxygen-awesome-css/
