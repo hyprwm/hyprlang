@@ -69,3 +69,43 @@ jobs:
       - name: Run tests
         run: |
           cd ./tests && ../build/hyprlang_test
+
+  doxygen:
+    name: "Deploy docs"
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+    steps:
+      - name: Checkout repository actions
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/actions
+
+      - name: Get required pkgs
+        run: |
+          sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
+          pacman --noconfirm --noprogressbar -Syyu
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang doxygen git openssh
+
+      - name: Get doxygen theme
+        run: |
+          git clone https://github.com/jothepro/doxygen-awesome-css
+          cd doxygen-awesome-css && git checkout v2.3.1 && cd ..
+      
+      - name: Build doxygen site
+        run: |
+          doxygen hyprlang-docs
+
+      - name: Deploy
+        env:
+          PK: ${{ secrets.UPDATE_DOCS_PK }}
+          PT: ${{ secrets.DEPLOY_PORT5 }}
+          AD: ${{ secrets.DEPLOY_USER }}
+          PH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          echo "$PK" > ./pk
+          chmod 400 ./pk
+          eval $(ssh-agent -s) && ssh-add ./pk
+          scp -O -o "StrictHostKeyChecking=no" -P $PT -r ./doxygen/html/* $AD:.$PH
+
+
