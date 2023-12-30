@@ -103,12 +103,9 @@ jobs:
           AD: ${{ secrets.DEPLOY_USER }}
           PH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          touch ./pk
-          cat >> ./pk << EOF
-          $PK
-          EOF
+          echo "$PK" > ./pk
           chmod 400 ./pk
-          eval $(ssh-agent -s) &&  ssh-add ./pk
+          eval $(ssh-agent -s) && ssh-add ./pk
           scp -P $PT -r ./doxygen/* $AD:.$PH
 
 
