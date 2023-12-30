@@ -51,3 +51,7 @@ add_baker = Koichi, 18, Morioh
 ## Docs
 
 Visit [hyprland.org/hyprlang](https://hyprland.org/hyprlang) to see the documentation.
+
+### Example implementation
+
+For an example implmentation, take a look at the `tests/` directory.
