@@ -85,7 +85,7 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang doxygen rsync
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang doxygen git
 
       - name: Get doxygen theme
         run: |
