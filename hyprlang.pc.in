@@ -1,0 +1,9 @@
+prefix="@PREFIX@"
+includedir="${prefix}/include"
+
+Name: hyprlang
+URL: https://github.com/hyprwm/hyprlang
+Description: The official implementation library for the hypr config language.
+Version: @HYPRLANG_VERSION@
+Cflags: -I"${prefix}/include"
+libs: -lhyprlang
