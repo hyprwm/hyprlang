@@ -71,7 +71,7 @@ namespace Hyprlang {
         bool throwAllErrors = false;
 
         /*!
-            @since 0.2.0
+            \since 0.2.0
             Don't throw on a missing config file. Carry on as if nothing happened.
         */
         bool allowMissingConfig = false;
@@ -148,9 +148,17 @@ namespace Hyprlang {
         ~CConfigValue();
 
         /*!
-            Return a pointer to the data. Prefer getValue().
+            Return a pointer to the data. Prefer getDataStaticPtr()
         */
         void* dataPtr() const;
+
+        /*!
+            \since 0.2.0
+            Return a static pointer to the m_pData.
+            As long as this configValue is alive, this pointer is valid.
+            CConfigValues are alive as long as the owning CConfig is alive.
+        */
+        void* const* getDataStaticPtr() const;
 
         /*!
             Get the contained value as an std::any.

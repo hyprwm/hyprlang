@@ -140,6 +140,13 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), 0xFF000000L);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), 0x22ffeeffL);
 
+        // test static values
+        std::cout << " → Testing static values\n";
+        static auto* const PTESTINT = config.getConfigValuePtr("testInt")->getDataStaticPtr();
+        EXPECT(*reinterpret_cast<int64_t*>(*PTESTINT), 123);
+        config.parse();
+        EXPECT(*reinterpret_cast<int64_t*>(*PTESTINT), 123);
+
         // test handlers
         std::cout << " → Testing handlers\n";
         EXPECT(barrelRoll, true);

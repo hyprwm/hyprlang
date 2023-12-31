@@ -62,6 +62,10 @@ void* CConfigValue::dataPtr() const {
     return m_pData;
 }
 
+void* const* CConfigValue::getDataStaticPtr() const {
+    return &m_pData;
+}
+
 CConfigCustomValueType::CConfigCustomValueType(PCONFIGCUSTOMVALUEHANDLERFUNC handler_, PCONFIGCUSTOMVALUEDESTRUCTOR dtor_, const char* def) {
     handler    = handler_;
     dtor       = dtor_;
