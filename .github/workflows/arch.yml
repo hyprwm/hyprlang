@@ -73,6 +73,7 @@ jobs:
   doxygen:
     name: "Deploy docs"
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     container:
       image: archlinux
     steps:
