@@ -351,11 +351,10 @@ CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& r
     else {
         impl->variables.push_back({lhs.substr(1), rhs});
         std::sort(impl->variables.begin(), impl->variables.end(), [](const auto& lhs, const auto& rhs) { return lhs.name.length() > rhs.name.length(); });
+        IT = std::find_if(impl->variables.begin(), impl->variables.end(), [&](const auto& v) { return v.name == lhs.substr(1); });
     }
 
     if (dynamic) {
-        if (IT == impl->variables.end())
-            IT = std::find_if(impl->variables.begin(), impl->variables.end(), [&](const auto& v) { return v.name == lhs.substr(1); });
         for (auto& l : IT->linesContainingVar) {
             parseLine(l, true);
         }
