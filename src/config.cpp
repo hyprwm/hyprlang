@@ -32,10 +32,17 @@ CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options) {
     impl = new CConfigImpl;
     try {
         impl->path = std::filesystem::canonical(path);
-    } catch (std::exception& e) { throw "Couldn't open file. File does not exist"; }
+    } catch (std::exception& e) {
+        if (!options.allowMissingConfig)
+            throw "Couldn't open file. File does not exist";
+    }
 
-    if (!std::filesystem::exists(impl->path))
-        throw "File does not exist";
+    if (!std::filesystem::exists(impl->path)) {
+        if (!options.allowMissingConfig)
+            throw "File does not exist";
+
+        impl->path = "";
+    }
 
     impl->envVariables.clear();
     for (char** env = environ; *env; ++env) {
@@ -495,6 +502,10 @@ CParseResult CConfig::parse() {
     for (auto& sc : impl->specialCategories) {
         applyDefaultsToCat(*sc);
     }
+
+    // implies options.allowMissingConfig
+    if (impl->path.empty())
+        return CParseResult{};
 
     CParseResult fileParseResult = parseFile(impl->path);
 

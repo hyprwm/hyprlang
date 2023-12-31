@@ -69,6 +69,12 @@ namespace Hyprlang {
             Return all errors instead of just the first
         */
         bool throwAllErrors = false;
+
+        /*!
+            @since 0.2.0
+            Don't throw on a missing config file. Carry on as if nothing happened.
+        */
+        bool allowMissingConfig = false;
     };
 
     /*!
