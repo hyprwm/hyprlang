@@ -102,6 +102,7 @@ namespace Hyprlang {
 
         /*!
             \since 0.2.0
+
             Don't throw on a missing config file. Carry on as if nothing happened.
         */
         bool allowMissingConfig = false;
@@ -184,6 +185,7 @@ namespace Hyprlang {
 
         /*!
             \since 0.2.0
+
             Return a static pointer to the m_pData.
             As long as this configValue is alive, this pointer is valid.
             CConfigValues are alive as long as the owning CConfig is alive.
