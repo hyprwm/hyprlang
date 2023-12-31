@@ -14,6 +14,36 @@ struct SSpecialCategory;
 
 namespace Hyprlang {
 
+    struct SVector2D;
+    class CConfigCustomValueType;
+
+    /* Variable typedefs */
+
+    /*!
+        Basic integer config type
+    */
+    typedef int64_t INT;
+
+    /*!
+        Basic float config type
+    */
+    typedef float FLOAT;
+
+    /*!
+        Basic string config type
+    */
+    typedef const char* STRING;
+
+    /*!
+        Basic vec2 config type
+    */
+    typedef SVector2D VEC2;
+
+    /*!
+        Custom config type
+    */
+    typedef CConfigCustomValueType CUSTOMTYPE;
+
     /*!
         A very simple vector type 
     */
@@ -136,11 +166,11 @@ namespace Hyprlang {
     class CConfigValue {
       public:
         CConfigValue();
-        CConfigValue(const int64_t value);
-        CConfigValue(const float value);
-        CConfigValue(const char* value);
-        CConfigValue(const SVector2D value);
-        CConfigValue(CConfigCustomValueType&& value);
+        CConfigValue(const INT value);
+        CConfigValue(const FLOAT value);
+        CConfigValue(const STRING value);
+        CConfigValue(const VEC2 value);
+        CConfigValue(CUSTOMTYPE&& value);
         CConfigValue(const CConfigValue&)  = delete;
         CConfigValue(CConfigValue&&)       = delete;
         CConfigValue(const CConfigValue&&) = delete;
@@ -168,11 +198,11 @@ namespace Hyprlang {
         std::any getValue() const {
             switch (m_eType) {
                 case CONFIGDATATYPE_EMPTY: throw;
-                case CONFIGDATATYPE_INT: return std::any(*reinterpret_cast<int64_t*>(m_pData));
-                case CONFIGDATATYPE_FLOAT: return std::any(*reinterpret_cast<float*>(m_pData));
-                case CONFIGDATATYPE_STR: return std::any(reinterpret_cast<const char*>(m_pData));
-                case CONFIGDATATYPE_VEC2: return std::any(*reinterpret_cast<SVector2D*>(m_pData));
-                case CONFIGDATATYPE_CUSTOM: return std::any(reinterpret_cast<CConfigCustomValueType*>(m_pData)->data);
+                case CONFIGDATATYPE_INT: return std::any(*reinterpret_cast<INT*>(m_pData));
+                case CONFIGDATATYPE_FLOAT: return std::any(*reinterpret_cast<FLOAT*>(m_pData));
+                case CONFIGDATATYPE_STR: return std::any(reinterpret_cast<STRING>(m_pData));
+                case CONFIGDATATYPE_VEC2: return std::any(*reinterpret_cast<VEC2*>(m_pData));
+                case CONFIGDATATYPE_CUSTOM: return std::any(reinterpret_cast<CUSTOMTYPE*>(m_pData)->data);
                 default: throw;
             }
             return {}; // unreachable
