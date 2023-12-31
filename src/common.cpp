@@ -92,7 +92,7 @@ void CConfigValue::defaultFrom(SConfigDefaultValue& ref) {
             break;
         }
         case CONFIGDATATYPE_STR: {
-            if (!m_pData)
+            if (m_pData)
                 free(m_pData);
             std::string str = std::any_cast<std::string>(ref.data);
             m_pData         = calloc(1, str.length() + 1);
@@ -131,7 +131,8 @@ void CConfigValue::setFrom(std::any value) {
             break;
         }
         case CONFIGDATATYPE_STR: {
-            free(m_pData);
+            if (m_pData)
+                free(m_pData);
             std::string str = std::any_cast<std::string>(value);
             m_pData         = calloc(1, str.length() + 1);
             strncpy((char*)m_pData, str.c_str(), str.length());
