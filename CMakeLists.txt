@@ -25,9 +25,18 @@ set_target_properties(hyprlang PROPERTIES PUBLIC_HEADER include/hyprlang.hpp)
 
 install(TARGETS hyprlang)
 
-add_executable(hyprlang_test "tests/main.cpp")
+# tests
+add_custom_target(tests)
+
+add_executable(hyprlang_test "tests/parse/main.cpp")
 target_link_libraries(hyprlang_test PRIVATE hyprlang)
 add_test(NAME "Parsing" WORKING_DIRECTORY "../tests/" COMMAND hyprlang_test "parse")
+add_dependencies(tests hyprlang_test)
+
+add_executable(hyprlang_fuzz "tests/fuzz/main.cpp")
+target_link_libraries(hyprlang_fuzz PRIVATE hyprlang)
+add_test(NAME "Fuzz" WORKING_DIRECTORY "../tests/" COMMAND hyprlang_fuzz "fuzz")
+add_dependencies(tests hyprlang_fuzz)
 
 # Installation
 install(TARGETS hyprlang
