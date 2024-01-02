@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 
 set(HYPRLANG_VERSION "0.2.0")
 set(PREFIX ${CMAKE_INSTALL_PREFIX})
+set(INCLUDE ${CMAKE_INSTALL_INCLUDEDIR})
 
 project(hyprlang
     VERSION ${HYPRLANG_VERSION}

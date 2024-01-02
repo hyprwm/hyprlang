@@ -12,6 +12,8 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [cmake];
 
+  outputs = ["out" "dev"];
+
   meta = with lib; {
     homepage = "https://github.com/hyprwm/hyprlang";
     description = "The official implementation library for the hypr config language";
