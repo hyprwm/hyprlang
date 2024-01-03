@@ -31,12 +31,12 @@ add_custom_target(tests)
 
 add_executable(hyprlang_test "tests/parse/main.cpp")
 target_link_libraries(hyprlang_test PRIVATE hyprlang)
-add_test(NAME "Parsing" WORKING_DIRECTORY "../tests/" COMMAND hyprlang_test "parse")
+add_test(NAME "Parsing" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests COMMAND hyprlang_test "parse")
 add_dependencies(tests hyprlang_test)
 
 add_executable(hyprlang_fuzz "tests/fuzz/main.cpp")
 target_link_libraries(hyprlang_fuzz PRIVATE hyprlang)
-add_test(NAME "Fuzz" WORKING_DIRECTORY "../tests/" COMMAND hyprlang_fuzz "fuzz")
+add_test(NAME "Fuzz" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests COMMAND hyprlang_fuzz "fuzz")
 add_dependencies(tests hyprlang_fuzz)
 
 # Installation
