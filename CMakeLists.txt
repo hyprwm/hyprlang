@@ -1,17 +1,19 @@
 cmake_minimum_required(VERSION 3.19)
 
 set(HYPRLANG_VERSION "0.2.1")
-set(PREFIX ${CMAKE_INSTALL_PREFIX})
-set(INCLUDE ${CMAKE_INSTALL_INCLUDEDIR})
 
 project(hyprlang
     VERSION ${HYPRLANG_VERSION}
     DESCRIPTION "A library to parse hypr config files"
 )
 
-configure_file(hyprlang.pc.in hyprlang.pc @ONLY)
-
 include(CTest)
+include(GNUInstallDirs)
+
+set(PREFIX ${CMAKE_INSTALL_PREFIX})
+set(INCLUDE ${CMAKE_INSTALL_FULL_INCLUDEDIR})
+
+configure_file(hyprlang.pc.in hyprlang.pc @ONLY)
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -43,4 +45,4 @@ add_dependencies(tests hyprlang_fuzz)
 install(TARGETS hyprlang
         PUBLIC_HEADER DESTINATION include
         LIBRARY DESTINATION lib)
-install(FILES ${CMAKE_BINARY_DIR}/hyprlang.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/hyprlang.pc DESTINATION ${PREFIX}/share/pkgconfig)
