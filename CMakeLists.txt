@@ -24,7 +24,10 @@ target_include_directories( hyprlang
     PUBLIC "./include"
     PRIVATE "./src"
 )
-set_target_properties(hyprlang PROPERTIES PUBLIC_HEADER include/hyprlang.hpp)
+set_target_properties(hyprlang PROPERTIES
+    VERSION ${HYPRLANG_VERSION}
+    SOVERSION 0
+    PUBLIC_HEADER include/hyprlang.hpp)
 
 install(TARGETS hyprlang)
 
