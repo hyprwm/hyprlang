@@ -48,4 +48,4 @@ add_dependencies(tests hyprlang_fuzz)
 install(TARGETS hyprlang
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES ${CMAKE_BINARY_DIR}/hyprlang.pc DESTINATION ${PREFIX}/share/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/hyprlang.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
