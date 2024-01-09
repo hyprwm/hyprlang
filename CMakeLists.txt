@@ -12,6 +12,7 @@ include(GNUInstallDirs)
 
 set(PREFIX ${CMAKE_INSTALL_PREFIX})
 set(INCLUDE ${CMAKE_INSTALL_FULL_INCLUDEDIR})
+set(LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR})
 
 configure_file(hyprlang.pc.in hyprlang.pc @ONLY)
 
