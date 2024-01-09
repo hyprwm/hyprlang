@@ -1,6 +1,6 @@
 prefix=@PREFIX@
 includedir=@INCLUDE@
-libdir=${prefix}/lib
+libdir=@LIBDIR@
 
 Name: hyprlang
 URL: https://github.com/hyprwm/hyprlang
