@@ -108,6 +108,11 @@ void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions optio
         if (!PCAT->key.empty())
             addSpecialConfigValue(name, options.key, CConfigValue("0"));
     }
+
+    // sort longest to shortest
+    std::sort(impl->specialCategories.begin(), impl->specialCategories.end(), [](const auto& a, const auto& b) -> int { return a->name.length() > b->name.length(); });
+    std::sort(impl->specialCategoryDescriptors.begin(), impl->specialCategoryDescriptors.end(),
+              [](const auto& a, const auto& b) -> int { return a->name.length() > b->name.length(); });
 }
 
 void CConfig::removeSpecialCategory(const char* name) {
@@ -241,7 +246,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
         // it might be in a special category
         bool found = false;
         for (auto& sc : impl->specialCategories) {
-            if (!valueName.starts_with(sc->name) || valueName.substr(sc->name.length() + 1).contains(":"))
+            if (!valueName.starts_with(sc->name))
                 continue;
 
             if (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != impl->currentSpecialKey)
@@ -260,7 +265,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
         if (!found) {
             // could be a dynamic category that doesnt exist yet
             for (auto& sc : impl->specialCategoryDescriptors) {
-                if (sc->key.empty() || !valueName.starts_with(sc->name) || valueName.substr(sc->name.length() + 1).contains(":"))
+                if (sc->key.empty() || !valueName.starts_with(sc->name))
                     continue;
 
                 // bingo
