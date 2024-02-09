@@ -506,12 +506,12 @@ CParseResult CConfig::parse() {
     if (impl->path.empty())
         return CParseResult{};
 
-    CParseResult fileParseResult = parseFile(impl->path);
+    CParseResult fileParseResult = parseFile(impl->path.c_str());
 
     return fileParseResult;
 }
 
-CParseResult CConfig::parseFile(std::string file) {
+CParseResult CConfig::parseFile(const char* file) {
     CParseResult  result;
 
     std::ifstream iffile(file);

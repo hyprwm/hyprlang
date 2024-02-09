@@ -274,7 +274,7 @@ namespace Hyprlang {
             Same as parse(), but parse a specific file, without any refreshing. 
             recommended to use for stuff like source = path.conf
         */
-        CParseResult parseFile(std::string file);
+        CParseResult parseFile(const char* file);
 
         /*!
             Parse a single "line", dynamically. 
