@@ -93,6 +93,15 @@ void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CCo
                                                              reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
 }
 
+void CConfig::removeSpecialConfigValue(const char* cat, const char* name) {
+    const auto IT = std::find_if(impl->specialCategoryDescriptors.begin(), impl->specialCategoryDescriptors.end(), [&](const auto& other) { return other->name == cat; });
+
+    if (IT == impl->specialCategoryDescriptors.end())
+        throw "No such category";
+
+    std::erase_if(IT->get()->defaultValues, [name](const auto& other) { return other.first == name; });
+}
+
 void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions options) {
     const auto PDESC          = impl->specialCategoryDescriptors.emplace_back(std::make_unique<SSpecialCategoryDescriptor>()).get();
     PDESC->name               = name;

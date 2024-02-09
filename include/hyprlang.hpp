@@ -181,10 +181,15 @@ namespace Hyprlang {
         CConfigValue(const STRING value);
         CConfigValue(const VEC2 value);
         CConfigValue(CUSTOMTYPE&& value);
-        CConfigValue(const CConfigValue&)  = delete;
         CConfigValue(CConfigValue&&)       = delete;
         CConfigValue(const CConfigValue&&) = delete;
         CConfigValue(CConfigValue&)        = delete;
+
+        /*!
+            \since 0.3.0
+        */
+        CConfigValue(const CConfigValue&);
+
         ~CConfigValue();
 
         /*!
@@ -292,9 +297,16 @@ namespace Hyprlang {
         void removeSpecialCategory(const char* name);
 
         /*!
+            \since 0.3.0
+
             Add a config value to a special category.
         */
         void addSpecialConfigValue(const char* cat, const char* name, const CConfigValue value);
+
+        /*!
+            Remove a config value from a special category.
+        */
+        void removeSpecialConfigValue(const char* cat, const char* name);
 
         /*!
             Parse the config. Refresh the values.
@@ -323,7 +335,7 @@ namespace Hyprlang {
 
         /*!
            Get a special category's config value ptr. These are only static for static (key-less)
-           categories, unless a new variable is added via addSpecialConfigValue.
+           categories, unless a new variable is added via addSpecialConfigValue or removed via removeSpecialConfigValue.
            key can be nullptr for static categories. Cannot be nullptr for id-based categories. 
            nullptr on fail.
         */

@@ -54,6 +54,11 @@ CConfigValue::CConfigValue(CConfigCustomValueType&& value) {
     m_eType = CONFIGDATATYPE_CUSTOM;
 }
 
+CConfigValue::CConfigValue(const CConfigValue& other) {
+    m_eType = other.m_eType;
+    setFrom(other.getValue());
+}
+
 CConfigValue::CConfigValue() {
     ;
 }
