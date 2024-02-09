@@ -110,6 +110,11 @@ void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions optio
     }
 }
 
+void CConfig::removeSpecialCategory(const char* name) {
+    std::erase_if(impl->specialCategories, [name](const auto& other) { return other->name == name; });
+    std::erase_if(impl->specialCategoryDescriptors, [name](const auto& other) { return other->name == name; });
+}
+
 void CConfig::applyDefaultsToCat(SSpecialCategory& cat) {
     for (auto& [k, v] : cat.descriptor->defaultValues) {
         cat.values[k].defaultFrom(v);
@@ -339,6 +344,8 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
             return result;
         }
     }
+
+    VALUEIT->second.m_bSetByUser = true;
 
     return result;
 }
@@ -594,4 +601,22 @@ CConfigValue* CConfig::getSpecialConfigValuePtr(const char* category, const char
 
 void CConfig::registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options) {
     impl->handlers.push_back(SHandler{name, options, func});
+}
+
+void CConfig::unregisterHandler(const char* name) {
+    std::erase_if(impl->handlers, [name](const auto& other) { return other.name == name; });
+}
+
+bool CConfig::specialCategoryExistsForKey(const char* category, const char* key) {
+    for (auto& sc : impl->specialCategories) {
+        if (sc->isStatic)
+            continue;
+
+        if (sc->name != category || std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != key)
+            continue;
+
+        return true;
+    }
+
+    return false;
 }

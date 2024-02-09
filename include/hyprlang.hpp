@@ -151,6 +151,15 @@ namespace Hyprlang {
         CConfigCustomValueType(PCONFIGCUSTOMVALUEHANDLERFUNC handler_, PCONFIGCUSTOMVALUEDESTRUCTOR dtor_, const char* defaultValue);
         ~CConfigCustomValueType();
 
+        /*!
+            \since 0.3.0
+
+            get the data pointer for the custom value type.
+        */
+        void* getData() {
+            return data;
+        }
+
       private:
         PCONFIGCUSTOMVALUEHANDLERFUNC handler    = nullptr;
         PCONFIGCUSTOMVALUEDESTRUCTOR  dtor       = nullptr;
@@ -210,6 +219,14 @@ namespace Hyprlang {
             return {}; // unreachable
         }
 
+        /*!
+            \since 0.3.0
+            
+            a flag to notify whether this value has been set explicitly by the user,
+            or not.
+        */
+        bool m_bSetByUser = false;
+
       private:
         // remember to also edit config.hpp if editing
         enum eDataType {
@@ -250,6 +267,13 @@ namespace Hyprlang {
         void registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options);
 
         /*!
+            \since 0.3.0
+            
+            Unregister a handler.        
+        */
+        void unregisterHandler(const char* name);
+
+        /*!
             Commence the config state. Config becomes immutable, as in
             no new values may be added or removed. Required for parsing.
         */
@@ -259,6 +283,13 @@ namespace Hyprlang {
             Add a special category. Can be done dynamically.
         */
         void addSpecialCategory(const char* name, SSpecialCategoryOptions options);
+
+        /*!
+            \since 0.3.0
+
+            Remove a special category. Can be done dynamically.
+        */
+        void removeSpecialCategory(const char* name);
 
         /*!
             Add a config value to a special category.
@@ -317,6 +348,13 @@ namespace Hyprlang {
                 return {};
             return val->getValue();
         }
+
+        /*!
+            Check whether a special category with the provided key value exists
+
+            \since 0.3.0
+        */
+        bool specialCategoryExistsForKey(const char* category, const char* key);
 
       private:
         bool         m_bCommenced = false;

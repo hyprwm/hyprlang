@@ -118,6 +118,8 @@ void CConfigValue::defaultFrom(SConfigDefaultValue& ref) {
             throw "bad defaultFrom type";
         }
     }
+
+    m_bSetByUser = false;
 }
 
 void CConfigValue::setFrom(std::any value) {
