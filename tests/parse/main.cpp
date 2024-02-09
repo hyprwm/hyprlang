@@ -46,7 +46,7 @@ static Hyprlang::CParseResult handleFlagsTest(const char* COMMAND, const char* V
 
 static Hyprlang::CParseResult handleSource(const char* COMMAND, const char* VALUE) {
     std::string PATH = std::filesystem::canonical(currentPath + "/" + VALUE);
-    return pConfig->parseFile(PATH);
+    return pConfig->parseFile(PATH.c_str());
 }
 
 static Hyprlang::CParseResult handleCustomValueSet(const char* VALUE, void** data) {
