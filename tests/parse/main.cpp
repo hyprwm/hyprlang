@@ -129,7 +129,7 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<float>(config.getConfigValue("testFloat")), 123.456f);
         auto EXP = Hyprlang::SVector2D{69, 420};
         EXPECT(std::any_cast<Hyprlang::SVector2D>(config.getConfigValue("testVec")), EXP);
-        EXPECT(std::any_cast<const char*>(config.getConfigValue("testString")), std::string{"Hello World! ## This is not a comment!"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testString")), std::string{"Hello World! # This is not a comment!"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringQuotes")), std::string{"\"Hello World!\""});
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueInt")), 123456L);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), 0xFFFFAABBL);

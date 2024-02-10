@@ -404,6 +404,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             line = line.substr(0, commentPos);
             break;
         } else {
+            line       = line.substr(0, commentPos + 1) + line.substr(commentPos + 2);
             commentPos = line.find('#', lastHashPos);
         }
     }
