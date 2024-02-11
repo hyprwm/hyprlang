@@ -5,6 +5,7 @@
 #include <format>
 #include <algorithm>
 #include <cmath>
+#include <expected>
 
 using namespace Hyprlang;
 extern "C" char**  environ;
@@ -177,7 +178,7 @@ static void replaceAll(std::string& str, const std::string& from, const std::str
     }
 }
 
-static int64_t configStringToInt(const std::string& VALUE) {
+static std::expected<int64_t, std::string> configStringToInt(const std::string& VALUE) {
     if (VALUE.starts_with("0x")) {
         // Values with 0x are hex
         const auto VALUEWITHOUTHEX = VALUE.substr(2);
@@ -189,15 +190,21 @@ static int64_t configStringToInt(const std::string& VALUE) {
         if (std::count(VALUEWITHOUTFUNC.begin(), VALUEWITHOUTFUNC.end(), ',') == 3) {
             // cool
             std::string rolling = VALUEWITHOUTFUNC;
-            uint8_t     r       = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto        r       = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            uint8_t g           = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto g              = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            uint8_t b           = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto b              = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            uint8_t a           = std::round(std::stof(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(',')))) * 255.f);
+            uint8_t a           = 0;
+            try {
+                a = std::round(std::stof(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(',')))) * 255.f);
+            } catch (std::exception& e) { return std::unexpected("failed parsing " + VALUEWITHOUTFUNC); }
 
-            return a * 0x1000000L + r * 0x10000L + g * 0x100L + b;
+            if (!r.has_value() || !g.has_value() || !b.has_value())
+                return std::unexpected("failed parsing " + VALUEWITHOUTFUNC);
+
+            return a * 0x1000000L + r.value() * 0x10000L + g.value() * 0x100L + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 8) {
             const auto RGBA = std::stol(VALUEWITHOUTFUNC, nullptr, 16);
 
@@ -205,7 +212,7 @@ static int64_t configStringToInt(const std::string& VALUE) {
             return (RGBA >> 8) + 0x1000000 * (RGBA & 0xFF);
         }
 
-        throw std::invalid_argument("rgba() expects length of 8 characters (4 bytes) or 4 comma separated values");
+        return std::unexpected("rgba() expects length of 8 characters (4 bytes) or 4 comma separated values");
 
     } else if (VALUE.starts_with("rgb(") && VALUE.ends_with(')')) {
         const auto VALUEWITHOUTFUNC = removeBeginEndSpacesTabs(VALUE.substr(4, VALUE.length() - 5));
@@ -214,20 +221,23 @@ static int64_t configStringToInt(const std::string& VALUE) {
         if (std::count(VALUEWITHOUTFUNC.begin(), VALUEWITHOUTFUNC.end(), ',') == 2) {
             // cool
             std::string rolling = VALUEWITHOUTFUNC;
-            uint8_t     r       = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto        r       = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            uint8_t g           = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto g              = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            uint8_t b           = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto b              = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
 
-            return 0xFF000000L + r * 0x10000L + g * 0x100L + b;
+            if (!r.has_value() || !g.has_value() || !b.has_value())
+                return std::unexpected("failed parsing " + VALUEWITHOUTFUNC);
+
+            return 0xFF000000L + r.value() * 0x10000L + g.value() * 0x100L + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 6) {
             const auto RGB = std::stol(VALUEWITHOUTFUNC, nullptr, 16);
 
             return RGB + 0xFF000000;
         }
 
-        throw std::invalid_argument("rgb() expects length of 6 characters (3 bytes) or 3 comma separated values");
+        return std::unexpected("rgb() expects length of 6 characters (3 bytes) or 3 comma separated values");
     } else if (VALUE.starts_with("true") || VALUE.starts_with("on") || VALUE.starts_with("yes")) {
         return 1;
     } else if (VALUE.starts_with("false") || VALUE.starts_with("off") || VALUE.starts_with("no")) {
@@ -235,9 +245,14 @@ static int64_t configStringToInt(const std::string& VALUE) {
     }
 
     if (VALUE.empty() || !isNumber(VALUE, false))
-        return 0;
+        return std::unexpected("cannot parse \"" + VALUE + "\" as an int.");
 
-    return std::stoll(VALUE);
+    try {
+        const auto RES = std::stoll(VALUE);
+        return RES;
+    } catch (std::exception& e) { return std::unexpected(std::string{"stoll threw: "} + e.what()); }
+
+    return 0;
 }
 
 CParseResult CConfig::configSetValueSafe(const std::string& command, const std::string& value) {
@@ -310,12 +325,15 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
     switch (VALUEIT->second.m_eType) {
         case CConfigValue::eDataType::CONFIGDATATYPE_INT: {
-            try {
-                VALUEIT->second.setFrom(configStringToInt(value));
-            } catch (std::exception& e) {
-                result.setError(std::format("failed parsing an int: {}", e.what()));
+
+            const auto INT = configStringToInt(value);
+            if (!INT.has_value()) {
+                result.setError(INT.error());
                 return result;
             }
+
+            VALUEIT->second.setFrom(INT.value());
+
             break;
         }
         case CConfigValue::eDataType::CONFIGDATATYPE_FLOAT: {
