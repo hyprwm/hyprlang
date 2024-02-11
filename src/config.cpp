@@ -351,6 +351,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
         }
         case CConfigValue::eDataType::CONFIGDATATYPE_CUSTOM: {
             reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->handler(value.c_str(), &reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->data);
+            reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->lastVal = value;
             break;
         }
         default: {

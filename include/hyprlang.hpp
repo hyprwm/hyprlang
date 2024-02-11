@@ -165,6 +165,7 @@ namespace Hyprlang {
         PCONFIGCUSTOMVALUEDESTRUCTOR  dtor       = nullptr;
         void*                         data       = nullptr;
         std::string                   defaultVal = "";
+        std::string                   lastVal    = "";
 
         friend class CConfigValue;
         friend class CConfig;
@@ -245,7 +246,8 @@ namespace Hyprlang {
         eDataType m_eType = eDataType::CONFIGDATATYPE_EMPTY;
         void*     m_pData = nullptr;
         void      defaultFrom(SConfigDefaultValue& ref);
-        void      setFrom(std::any value);
+        void      setFrom(std::any ref);
+        void      setFrom(const CConfigValue* const ref);
 
         friend class CConfig;
     };

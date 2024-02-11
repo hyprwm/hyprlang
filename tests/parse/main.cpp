@@ -115,6 +115,9 @@ int main(int argc, char** argv, char** envp) {
         config.addSpecialCategory("specialGeneric:two", {nullptr, true});
         config.addSpecialConfigValue("specialGeneric:two", "value", 0L);
 
+        const Hyprlang::CConfigValue copyTest = {1L};
+        config.addSpecialConfigValue("specialGeneric:one", "copyTest", copyTest);
+
         const auto PARSERESULT = config.parse();
         if (PARSERESULT.error) {
             std::cout << "Parse error: " << PARSERESULT.getError() << "\n";
@@ -179,6 +182,9 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "b")), 2);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "value")), 1);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:two", "value")), 2);
+
+        // test copying
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "copyTest")), 2);
 
         // test sourcing
         std::cout << " → Testing sourcing\n";
