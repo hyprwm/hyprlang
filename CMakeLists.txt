@@ -30,6 +30,12 @@ set_target_properties(hyprlang PROPERTIES
     SOVERSION 0
     PUBLIC_HEADER include/hyprlang.hpp)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # for std::expected.
+    # probably evil. Arch's clang is very outdated tho...
+    target_compile_options(hyprlang PUBLIC -std=gnu++2b -D__cpp_concepts=202002L -Wno-macro-redefined)
+endif()
+
 install(TARGETS hyprlang)
 
 # tests
