@@ -20,7 +20,7 @@ std::string garbage() {
 int main(int argc, char** argv, char** envp) {
 
     Hyprlang::CConfig config("./eeeeeeeUnused", {.allowMissingConfig = true});
-    config.addConfigValue("test", {0L});
+    config.addConfigValue("test", {(Hyprlang::INT)0});
 
     config.parseDynamic("");
     config.parseDynamic("", "");
