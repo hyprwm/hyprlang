@@ -30,19 +30,12 @@ static std::string removeBeginEndSpacesTabs(std::string str) {
 }
 
 CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options) {
-    impl = new CConfigImpl;
-    try {
-        impl->path = std::filesystem::canonical(path);
-    } catch (std::exception& e) {
-        if (!options.allowMissingConfig)
-            throw "Couldn't open file. File does not exist";
-    }
+    impl       = new CConfigImpl;
+    impl->path = path;
 
     if (!std::filesystem::exists(impl->path)) {
         if (!options.allowMissingConfig)
             throw "File does not exist";
-
-        impl->path = "";
     }
 
     impl->envVariables.clear();
@@ -543,11 +536,20 @@ CParseResult CConfig::parse() {
         applyDefaultsToCat(*sc);
     }
 
-    // implies options.allowMissingConfig
-    if (impl->path.empty())
-        return CParseResult{};
+    bool fileExists = std::filesystem::exists(impl->path);
 
-    CParseResult fileParseResult = parseFile(impl->path.c_str());
+    // implies options.allowMissingConfig
+    if (impl->configOptions.allowMissingConfig && !fileExists)
+        return CParseResult{};
+    else if (!fileExists) {
+        CParseResult res;
+        res.setError("Config file is missing");
+        return res;
+    }
+
+    std::string  canonical = std::filesystem::canonical(impl->path);
+
+    CParseResult fileParseResult = parseFile(canonical.c_str());
 
     return fileParseResult;
 }

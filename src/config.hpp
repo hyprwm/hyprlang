@@ -55,7 +55,8 @@ struct SSpecialCategory {
 
 class CConfigImpl {
   public:
-    std::string                                              path = "";
+    std::string                                              path         = "";
+    std::string                                              originalPath = "";
 
     std::unordered_map<std::string, Hyprlang::CConfigValue>  values;
     std::unordered_map<std::string, SConfigDefaultValue>     defaultValues;
