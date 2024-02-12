@@ -175,7 +175,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
     if (VALUE.starts_with("0x")) {
         // Values with 0x are hex
         const auto VALUEWITHOUTHEX = VALUE.substr(2);
-        return stol(VALUEWITHOUTHEX, nullptr, 16);
+        return stoll(VALUEWITHOUTHEX, nullptr, 16);
     } else if (VALUE.starts_with("rgba(") && VALUE.ends_with(')')) {
         const auto VALUEWITHOUTFUNC = removeBeginEndSpacesTabs(VALUE.substr(5, VALUE.length() - 6));
 
@@ -199,7 +199,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
 
             return a * 0x1000000L + r.value() * 0x10000L + g.value() * 0x100L + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 8) {
-            const auto RGBA = std::stol(VALUEWITHOUTFUNC, nullptr, 16);
+            const auto RGBA = std::stoll(VALUEWITHOUTFUNC, nullptr, 16);
 
             // now we need to RGBA -> ARGB. The config holds ARGB only.
             return (RGBA >> 8) + 0x1000000 * (RGBA & 0xFF);
@@ -225,7 +225,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
 
             return 0xFF000000L + r.value() * 0x10000L + g.value() * 0x100L + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 6) {
-            const auto RGB = std::stol(VALUEWITHOUTFUNC, nullptr, 16);
+            const auto RGB = std::stoll(VALUEWITHOUTFUNC, nullptr, 16);
 
             return RGB + 0xFF000000;
         }
