@@ -197,7 +197,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
             if (!r.has_value() || !g.has_value() || !b.has_value())
                 return std::unexpected("failed parsing " + VALUEWITHOUTFUNC);
 
-            return a * INT64_C(0x1000000) + r.value() * INT64_C(0x10000) + g.value() * INT64_C(0x100) + b.value();
+            return a * (Hyprlang::INT)0x1000000 + r.value() * (Hyprlang::INT)0x10000 + g.value() * (Hyprlang::INT)0x100 + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 8) {
             const auto RGBA = std::stoll(VALUEWITHOUTFUNC, nullptr, 16);
 
@@ -223,7 +223,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
             if (!r.has_value() || !g.has_value() || !b.has_value())
                 return std::unexpected("failed parsing " + VALUEWITHOUTFUNC);
 
-            return INT64_C(0xFF000000) + r.value() * INT64_C(0x10000) + g.value() * INT64_C(0x100) + b.value();
+            return (Hyprlang::INT)0xFF000000 + r.value() * (Hyprlang::INT)0x10000 + g.value() * (Hyprlang::INT)0x100 + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 6) {
             const auto RGB = std::stoll(VALUEWITHOUTFUNC, nullptr, 16);
 

@@ -81,24 +81,24 @@ int main(int argc, char** argv, char** envp) {
         currentPath = std::filesystem::canonical("./config/");
 
         // setup config
-        config.addConfigValue("testInt", INT64_C(0));
+        config.addConfigValue("testInt", (Hyprlang::INT)0);
         config.addConfigValue("testFloat", 0.F);
         config.addConfigValue("testVec", Hyprlang::SVector2D{69, 420});
         config.addConfigValue("testString", "");
         config.addConfigValue("testEnv", "");
-        config.addConfigValue("testVar", INT64_C(0));
+        config.addConfigValue("testVar", (Hyprlang::INT)0);
         config.addConfigValue("testStringQuotes", "");
-        config.addConfigValue("testCategory:testValueInt", INT64_C(0));
-        config.addConfigValue("testCategory:testValueHex", INT64_C(0xA));
-        config.addConfigValue("testCategory:nested1:testValueNest", INT64_C(0));
-        config.addConfigValue("testCategory:nested1:nested2:testValueNest", INT64_C(0));
-        config.addConfigValue("testDefault", INT64_C(123));
-        config.addConfigValue("testCategory:testColor1", INT64_C(0));
-        config.addConfigValue("testCategory:testColor2", INT64_C(0));
-        config.addConfigValue("testCategory:testColor3", INT64_C(0));
-        config.addConfigValue("myColors:pink", INT64_C(0));
-        config.addConfigValue("myColors:green", INT64_C(0));
-        config.addConfigValue("myColors:random", INT64_C(0));
+        config.addConfigValue("testCategory:testValueInt", (Hyprlang::INT)0);
+        config.addConfigValue("testCategory:testValueHex", (Hyprlang::INT)0xA);
+        config.addConfigValue("testCategory:nested1:testValueNest", (Hyprlang::INT)0);
+        config.addConfigValue("testCategory:nested1:nested2:testValueNest", (Hyprlang::INT)0);
+        config.addConfigValue("testDefault", (Hyprlang::INT)123);
+        config.addConfigValue("testCategory:testColor1", (Hyprlang::INT)0);
+        config.addConfigValue("testCategory:testColor2", (Hyprlang::INT)0);
+        config.addConfigValue("testCategory:testColor3", (Hyprlang::INT)0);
+        config.addConfigValue("myColors:pink", (Hyprlang::INT)0);
+        config.addConfigValue("myColors:green", (Hyprlang::INT)0);
+        config.addConfigValue("myColors:random", (Hyprlang::INT)0);
         config.addConfigValue("customType", {Hyprlang::CConfigCustomValueType{&handleCustomValueSet, &handleCustomValueDestroy, "def"}});
 
         config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
@@ -106,16 +106,16 @@ int main(int argc, char** argv, char** envp) {
         config.registerHandler(&handleSource, "source", {false});
 
         config.addSpecialCategory("special", {"key"});
-        config.addSpecialConfigValue("special", "value", INT64_C(0));
+        config.addSpecialConfigValue("special", "value", (Hyprlang::INT)0);
 
         config.commence();
 
         config.addSpecialCategory("specialGeneric:one", {nullptr, true});
-        config.addSpecialConfigValue("specialGeneric:one", "value", INT64_C(0));
+        config.addSpecialConfigValue("specialGeneric:one", "value", (Hyprlang::INT)0);
         config.addSpecialCategory("specialGeneric:two", {nullptr, true});
-        config.addSpecialConfigValue("specialGeneric:two", "value", INT64_C(0));
+        config.addSpecialConfigValue("specialGeneric:two", "value", (Hyprlang::INT)0);
 
-        const Hyprlang::CConfigValue copyTest = {INT64_C(1)};
+        const Hyprlang::CConfigValue copyTest = {(Hyprlang::INT)1};
         config.addSpecialConfigValue("specialGeneric:one", "copyTest", copyTest);
 
         const auto PARSERESULT = config.parse();
@@ -134,14 +134,14 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<Hyprlang::SVector2D>(config.getConfigValue("testVec")), EXP);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testString")), std::string{"Hello World! # This is not a comment!"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringQuotes")), std::string{"\"Hello World!\""});
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueInt")), INT64_C(123456));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), INT64_C(0xFFFFAABB));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:nested1:testValueNest")), INT64_C(1));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:nested1:nested2:testValueNest")), INT64_C(1));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testDefault")), INT64_C(123));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor1")), INT64_C(0xFFFFFFFF));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), INT64_C(0xFF000000));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), INT64_C(0x22ffeeff));
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueInt")), (Hyprlang::INT)123456);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), (Hyprlang::INT)0xFFFFAABB);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:nested1:testValueNest")), (Hyprlang::INT)1);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:nested1:nested2:testValueNest")), (Hyprlang::INT)1);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testDefault")), (Hyprlang::INT)123);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor1")), (Hyprlang::INT)0xFFFFFFFF);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), (Hyprlang::INT)0xFF000000);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), (Hyprlang::INT)0x22ffeeff);
 
         // test static values
         std::cout << " → Testing static values\n";
@@ -161,7 +161,7 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(config.parseDynamic("doABarrelRoll = woohoo, some, params").error, false);
         EXPECT(barrelRoll, true);
         EXPECT(config.parseDynamic("testCategory:testValueHex", "0xaabbccdd").error, false);
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), INT64_C(0xAABBCCDD));
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), (Hyprlang::INT)0xAABBCCDD);
 
         // test variables
         std::cout << " → Testing variables\n";
@@ -188,13 +188,13 @@ int main(int argc, char** argv, char** envp) {
 
         // test sourcing
         std::cout << " → Testing sourcing\n";
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:pink")), INT64_C(0xFFc800c8));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:green")), INT64_C(0xFF14f014));
-        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:random")), INT64_C(0xFFFF1337));
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:pink")), (Hyprlang::INT)0xFFc800c8);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:green")), (Hyprlang::INT)0xFF14f014);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:random")), (Hyprlang::INT)0xFFFF1337);
 
         // test custom type
         std::cout << " → Testing custom types\n";
-        EXPECT(*reinterpret_cast<int64_t*>(std::any_cast<void*>(config.getConfigValue("customType"))), INT64_C(1));
+        EXPECT(*reinterpret_cast<int64_t*>(std::any_cast<void*>(config.getConfigValue("customType"))), (Hyprlang::INT)1);
 
         std::cout << " → Testing error.conf\n";
         Hyprlang::CConfig errorConfig("./config/error.conf", {.verifyOnly = true, .throwAllErrors = true});
