@@ -85,6 +85,10 @@ void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CCo
                                          SConfigDefaultValue{reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->defaultVal, (eDataType)value.m_eType,
                                                              reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->handler,
                                                              reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
+
+    const auto CAT = std::find_if(impl->specialCategories.begin(), impl->specialCategories.end(), [cat](const auto& other) { return other->name == cat; });
+    if (CAT != impl->specialCategories.end())
+        CAT->get()->values[name].defaultFrom(IT->get()->defaultValues[name]);
 }
 
 void CConfig::removeSpecialConfigValue(const char* cat, const char* name) {
