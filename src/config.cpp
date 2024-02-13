@@ -70,7 +70,7 @@ void CConfig::addConfigValue(const char* name, const CConfigValue& value) {
                                                         reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
 }
 
-void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CConfigValue value) {
+void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CConfigValue& value) {
     const auto IT = std::find_if(impl->specialCategoryDescriptors.begin(), impl->specialCategoryDescriptors.end(), [&](const auto& other) { return other->name == cat; });
 
     if (IT == impl->specialCategoryDescriptors.end())

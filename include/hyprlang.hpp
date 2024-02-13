@@ -299,11 +299,13 @@ namespace Hyprlang {
         void removeSpecialCategory(const char* name);
 
         /*!
-            \since 0.3.0
+            \since 0.3.2
 
             Add a config value to a special category.
+
+            \note Before 0.3.2, this takes a `const CConfigValue` (non-ref)
         */
-        void addSpecialConfigValue(const char* cat, const char* name, const CConfigValue value);
+        void addSpecialConfigValue(const char* cat, const char* name, const CConfigValue& value);
 
         /*!
             Remove a config value from a special category.
