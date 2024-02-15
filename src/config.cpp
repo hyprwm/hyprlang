@@ -86,7 +86,8 @@ void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CCo
                                                              reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->handler,
                                                              reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
 
-    const auto CAT = std::find_if(impl->specialCategories.begin(), impl->specialCategories.end(), [cat](const auto& other) { return other->name == cat; });
+    const auto CAT = std::find_if(impl->specialCategories.begin(), impl->specialCategories.end(), [cat, name](const auto& other) { return other->name == cat && other->isStatic; });
+
     if (CAT != impl->specialCategories.end())
         CAT->get()->values[name].defaultFrom(IT->get()->defaultValues[name]);
 }
