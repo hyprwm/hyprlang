@@ -342,7 +342,7 @@ namespace Hyprlang {
 
         /*!
            Get a special category's config value ptr. These are only static for static (key-less)
-           categories, unless a new variable is added via addSpecialConfigValue or removed via removeSpecialConfigValue.
+           categories.
            key can be nullptr for static categories. Cannot be nullptr for id-based categories. 
            nullptr on fail.
         */
