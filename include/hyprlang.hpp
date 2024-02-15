@@ -204,6 +204,9 @@ namespace Hyprlang {
             Return a static pointer to the m_pData.
             As long as this configValue is alive, this pointer is valid.
             CConfigValues are alive as long as the owning CConfig is alive.
+
+            Please note only the first (outer) pointer is static. The second
+            may (and most likely will) be changing.
         */
         void* const* getDataStaticPtr() const;
 
