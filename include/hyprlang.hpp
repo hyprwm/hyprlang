@@ -207,6 +207,12 @@ namespace Hyprlang {
 
             Please note only the first (outer) pointer is static. The second
             may (and most likely will) be changing.
+
+            For all types except STRING typeof(**retval) is the config value type
+            (e.g. INT or FLOAT)
+
+            Please note STRING is a special type and instead of
+            typeof(**retval) being const char*, typeof(\*retval) is a const char*.
         */
         void* const* getDataStaticPtr() const;
 
