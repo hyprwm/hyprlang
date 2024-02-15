@@ -163,6 +163,11 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(config.parseDynamic("testCategory:testValueHex", "0xaabbccdd").error, false);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), (Hyprlang::INT)0xAABBCCDD);
 
+        // test dynamic special
+        config.addSpecialConfigValue("specialGeneric:one", "boom", (Hyprlang::INT)0);
+        EXPECT(config.parseDynamic("specialGeneric:one:boom = 1").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "boom")), (Hyprlang::INT)1);
+
         // test variables
         std::cout << " → Testing variables\n";
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 13371337);
