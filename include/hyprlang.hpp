@@ -131,6 +131,17 @@ namespace Hyprlang {
             don't pop up an error if the config value is missing
         */
         bool ignoreMissing = false;
+
+        /*!
+            Make this category an anonymous special one.
+            key has to be nullptr.
+
+            Anonymous special categories behave like key-based ones, but the keys
+            will be automatically assigned without user input.
+
+            \since 0.4.0
+        */
+        bool anonymousKeyBased = false;
     };
 
     /*!

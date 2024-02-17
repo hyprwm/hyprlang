@@ -108,6 +108,9 @@ int main(int argc, char** argv, char** envp) {
         config.addSpecialCategory("special", {"key"});
         config.addSpecialConfigValue("special", "value", (Hyprlang::INT)0);
 
+        config.addSpecialCategory("specialAnonymous", {nullptr, false, true});
+        config.addSpecialConfigValue("specialAnonymous", "value", (Hyprlang::INT)0);
+
         config.commence();
 
         config.addSpecialCategory("specialGeneric:one", {nullptr, true});
@@ -193,6 +196,11 @@ int main(int argc, char** argv, char** envp) {
 
         // test listing keys
         EXPECT(config.listKeysForSpecialCategory("special")[1], "b");
+
+        // test anonymous
+        EXPECT(config.listKeysForSpecialCategory("specialAnonymous").size(), 2);
+        const auto KEYS = config.listKeysForSpecialCategory("specialAnonymous");
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymous", "value", KEYS[1].c_str())), 3);
 
         // test sourcing
         std::cout << " → Testing sourcing\n";

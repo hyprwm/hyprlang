@@ -8,7 +8,11 @@
 #include <expected>
 
 using namespace Hyprlang;
-extern "C" char**  environ;
+extern "C" char** environ;
+
+// defines
+inline constexpr const char* ANONYMOUS_KEY = "__hyprlang_internal_anonymous_key";
+//
 
 static std::string removeBeginEndSpacesTabs(std::string str) {
     if (str.empty())
@@ -107,14 +111,17 @@ void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions optio
     PDESC->key                = options.key ? options.key : "";
     PDESC->dontErrorOnMissing = options.ignoreMissing;
 
-    if (!options.key) {
+    if (!options.key && !options.anonymousKeyBased) {
         const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
         PCAT->descriptor = PDESC;
         PCAT->name       = name;
-        PCAT->key        = options.key ? options.key : "";
+        PCAT->key        = "";
         PCAT->isStatic   = true;
-        if (!PCAT->key.empty())
-            addSpecialConfigValue(name, options.key, CConfigValue("0"));
+    }
+
+    if (options.anonymousKeyBased) {
+        PDESC->key       = ANONYMOUS_KEY;
+        PDESC->anonymous = true;
     }
 
     // sort longest to shortest
@@ -310,12 +317,26 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                 if (VALUEIT != PCAT->values.end())
                     found = true;
 
-                if (VALUEIT == PCAT->values.end() || VALUEIT->first != sc->key) {
-                    result.setError(std::format("special category's first value must be the key. Key for <{}> is <{}>", PCAT->name, PCAT->key));
-                    return result;
-                }
+                if (sc->anonymous) {
+                    // find suitable key
+                    size_t biggest = 0;
+                    for (auto& catt : impl->specialCategories) {
+                        if (catt->anonymousID > biggest)
+                            biggest = catt->anonymousID;
+                    }
 
-                impl->currentSpecialKey = value;
+                    biggest++;
+
+                    PCAT->values[ANONYMOUS_KEY].setFrom(std::to_string(biggest));
+                    impl->currentSpecialKey = std::to_string(biggest);
+                    PCAT->anonymousID       = biggest;
+                } else {
+                    if (VALUEIT == PCAT->values.end() || VALUEIT->first != sc->key) {
+                        result.setError(std::format("special category's first value must be the key. Key for <{}> is <{}>", PCAT->name, PCAT->key));
+                        return result;
+                    }
+                    impl->currentSpecialKey = value;
+                }
 
                 break;
             }

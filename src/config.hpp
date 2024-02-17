@@ -41,6 +41,7 @@ struct SSpecialCategoryDescriptor {
     std::string                                          key  = "";
     std::unordered_map<std::string, SConfigDefaultValue> defaultValues;
     bool                                                 dontErrorOnMissing = false;
+    bool                                                 anonymous          = false;
 };
 
 struct SSpecialCategory {
@@ -51,6 +52,9 @@ struct SSpecialCategory {
     bool                                                    isStatic = false;
 
     void                                                    applyDefaults();
+
+    // for easy anonymous ID'ing
+    size_t anonymousID = 0;
 };
 
 class CConfigImpl {
