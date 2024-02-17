@@ -263,7 +263,9 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
     valueName += command;
 
-    auto VALUEIT = impl->values.find(valueName);
+    const auto VALUEONLYNAME = valueName.contains(":") ? valueName.substr(valueName.find_last_of(':') + 1) : valueName;
+
+    auto       VALUEIT = impl->values.find(valueName);
     if (VALUEIT == impl->values.end()) {
         // it might be in a special category
         bool found = false;
@@ -289,6 +291,10 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
             for (auto& sc : impl->specialCategoryDescriptors) {
                 if (sc->key.empty() || !valueName.starts_with(sc->name))
                     continue;
+
+                // category does exist, check if value exists
+                if (!sc->defaultValues.contains(VALUEONLYNAME) && VALUEONLYNAME != sc->key)
+                    break;
 
                 // bingo
                 const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
