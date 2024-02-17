@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <fstream>
+#include <vector>
 
 class CConfigImpl;
 struct SConfigDefaultValue;
@@ -381,6 +382,31 @@ namespace Hyprlang {
         */
         bool specialCategoryExistsForKey(const char* category, const char* key);
 
+        /*!
+            Get a vector with all registered keys for a special category
+
+            It's an error to query this for a static or non-existent category
+
+            \since 0.4.0
+        */
+        std::vector<std::string> listKeysForSpecialCategory(const char* category) {
+            const char** cats = nullptr;
+            size_t       len  = 0;
+            retrieveKeysForCat(category, &cats, &len);
+
+            if (len == 0)
+                return {};
+
+            std::vector<std::string> result;
+            for (size_t i = 0; i < len; ++i) {
+                result.push_back(cats[i]);
+            }
+
+            free(cats);
+
+            return result;
+        }
+
       private:
         bool         m_bCommenced = false;
 
@@ -391,6 +417,7 @@ namespace Hyprlang {
         CParseResult parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic = false);
         void         clearState();
         void         applyDefaultsToCat(SSpecialCategory& cat);
+        void         retrieveKeysForCat(const char* category, const char*** out, size_t* len);
     };
 };
 #endif

@@ -661,3 +661,37 @@ bool CConfig::specialCategoryExistsForKey(const char* category, const char* key)
 
     return false;
 }
+
+/* if len != 0, out needs to be freed */
+void CConfig::retrieveKeysForCat(const char* category, const char*** out, size_t* len) {
+    size_t count = 0;
+    for (auto& sc : impl->specialCategories) {
+        if (sc->isStatic)
+            continue;
+
+        if (sc->name != category)
+            continue;
+
+        count++;
+    }
+
+    if (count == 0) {
+        *len = 0;
+        return;
+    }
+
+    *out            = (const char**)calloc(1, count * sizeof(const char*));
+    size_t counter2 = 0;
+    for (auto& sc : impl->specialCategories) {
+        if (sc->isStatic)
+            continue;
+
+        if (sc->name != category)
+            continue;
+
+        // EVIL, but the pointers will be almost instantly discarded by the caller
+        (*out)[counter2++] = (const char*)sc->values[sc->key].m_pData;
+    }
+
+    *len = count;
+}

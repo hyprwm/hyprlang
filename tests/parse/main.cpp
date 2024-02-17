@@ -191,6 +191,9 @@ int main(int argc, char** argv, char** envp) {
         // test copying
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "copyTest")), 2);
 
+        // test listing keys
+        EXPECT(config.listKeysForSpecialCategory("special")[1], "b");
+
         // test sourcing
         std::cout << " → Testing sourcing\n";
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:pink")), (Hyprlang::INT)0xFFc800c8);
