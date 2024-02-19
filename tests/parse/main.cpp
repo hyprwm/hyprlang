@@ -191,6 +191,10 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "value")), 1);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:two", "value")), 2);
 
+        // test dynamic special variable
+        EXPECT(config.parseDynamic("$SPECIALVAL1 = 2").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "a")), (Hyprlang::INT)2);
+
         // test copying
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "copyTest")), 2);
 

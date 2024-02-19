@@ -11,9 +11,16 @@ struct SHandler {
 };
 
 struct SVariable {
-    std::string              name  = "";
-    std::string              value = "";
-    std::vector<std::string> linesContainingVar; // for dynamic updates
+    std::string name  = "";
+    std::string value = "";
+
+    struct SVarLine {
+        std::string              line;
+        std::vector<std::string> categories;
+        SSpecialCategory*        specialCategory = nullptr; // if applicable
+    };
+
+    std::vector<SVarLine> linesContainingVar; // for dynamic updates
 };
 
 // remember to also edit CConfigValue if editing
@@ -71,7 +78,8 @@ class CConfigImpl {
     std::vector<std::unique_ptr<SSpecialCategoryDescriptor>> specialCategoryDescriptors;
 
     std::vector<std::string>                                 categories;
-    std::string                                              currentSpecialKey = "";
+    std::string                                              currentSpecialKey      = "";
+    SSpecialCategory*                                        currentSpecialCategory = nullptr; // if applicable
 
     std::string                                              parseError = "";
 

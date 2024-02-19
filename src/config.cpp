@@ -276,21 +276,32 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
     if (VALUEIT == impl->values.end()) {
         // it might be in a special category
         bool found = false;
-        for (auto& sc : impl->specialCategories) {
-            if (!valueName.starts_with(sc->name))
-                continue;
 
-            if (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != impl->currentSpecialKey)
-                continue;
+        if (impl->currentSpecialCategory && valueName.starts_with(impl->currentSpecialCategory->name)) {
+            VALUEIT = impl->currentSpecialCategory->values.find(valueName.substr(impl->currentSpecialCategory->name.length() + 1));
 
-            VALUEIT = sc->values.find(valueName.substr(sc->name.length() + 1));
-
-            if (VALUEIT != sc->values.end())
+            if (VALUEIT != impl->currentSpecialCategory->values.end())
                 found = true;
-            else if (sc->descriptor->dontErrorOnMissing)
-                return result; // will return a success, cuz we want to ignore missing
+        }
 
-            break;
+        if (!found) {
+            for (auto& sc : impl->specialCategories) {
+                if (!valueName.starts_with(sc->name))
+                    continue;
+
+                if (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != impl->currentSpecialKey)
+                    continue;
+
+                VALUEIT                      = sc->values.find(valueName.substr(sc->name.length() + 1));
+                impl->currentSpecialCategory = sc.get();
+
+                if (VALUEIT != sc->values.end())
+                    found = true;
+                else if (sc->descriptor->dontErrorOnMissing)
+                    return result; // will return a success, cuz we want to ignore missing
+
+                break;
+            }
         }
 
         if (!found) {
@@ -312,7 +323,8 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
                 applyDefaultsToCat(*PCAT);
 
-                VALUEIT = PCAT->values.find(valueName.substr(sc->name.length() + 1));
+                VALUEIT                      = PCAT->values.find(valueName.substr(sc->name.length() + 1));
+                impl->currentSpecialCategory = PCAT;
 
                 if (VALUEIT != PCAT->values.end())
                     found = true;
@@ -421,8 +433,12 @@ CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& r
 
     if (dynamic) {
         for (auto& l : IT->linesContainingVar) {
-            parseLine(l, true);
+            impl->categories             = l.categories;
+            impl->currentSpecialCategory = l.specialCategory;
+            parseLine(l.line, true);
         }
+
+        impl->categories = {};
     }
 
     CParseResult result;
@@ -492,7 +508,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 if (RHSIT == std::string::npos && LHSIT == std::string::npos)
                     continue;
                 else
-                    var.linesContainingVar.push_back(line);
+                    var.linesContainingVar.push_back({line, impl->categories, impl->currentSpecialCategory});
 
                 anyMatch = true;
             }
@@ -537,7 +553,8 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 return result;
             }
 
-            impl->currentSpecialKey = "";
+            impl->currentSpecialKey      = "";
+            impl->currentSpecialCategory = nullptr;
             impl->categories.pop_back();
         } else {
             // open a category.
