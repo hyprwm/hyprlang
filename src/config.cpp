@@ -405,8 +405,14 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
             break;
         }
         case CConfigValue::eDataType::CONFIGDATATYPE_CUSTOM: {
-            reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->handler(value.c_str(), &reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->data);
+            auto RESULT = reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)
+                              ->handler(value.c_str(), &reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->data);
             reinterpret_cast<CConfigCustomValueType*>(VALUEIT->second.m_pData)->lastVal = value;
+
+            if (RESULT.error) {
+                result.setError(RESULT.getError());
+                return result;
+            }
             break;
         }
         default: {
