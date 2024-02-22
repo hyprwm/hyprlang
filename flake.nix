@@ -16,6 +16,7 @@
     pkgsFor = eachSystem (system:
       import nixpkgs {
         localSystem.system = system;
+        overlays = with self.overlays; [hyprlang];
       });
     mkDate = longDate: (lib.concatStringsSep "-" [
       (builtins.substring 0 4 longDate)
@@ -34,9 +35,10 @@
       };
     };
 
-    packages = eachSystem (system:
-      (self.overlays.default null pkgsFor.${system})
-      // {default = self.packages.${system}.hyprlang;});
+    packages = eachSystem (system: {
+      default = self.packages.${system}.hyprlang;
+      inherit (pkgsFor.${system}) hyprlang hyprlang-with-tests;
+    });
 
     formatter = eachSystem (system: pkgsFor.${system}.alejandra);
   };
