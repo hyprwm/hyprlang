@@ -26,8 +26,8 @@
     overlays = {
       default = self.overlays.hyprlang;
       hyprlang = final: prev: {
-        hyprlang = prev.callPackage ./nix/default.nix {
-          stdenv = prev.gcc13Stdenv;
+        hyprlang = final.callPackage ./nix/default.nix {
+          stdenv = final.gcc13Stdenv;
           version = "0.pre" + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
         };
         hyprlang-with-tests = final.hyprlang.override {doCheck = true;};
