@@ -13,7 +13,10 @@
   }: let
     inherit (nixpkgs) lib;
     eachSystem = lib.genAttrs (import systems);
-    pkgsFor = nixpkgs.legacyPackages;
+    pkgsFor = eachSystem (system:
+      import nixpkgs {
+        localSystem.system = system;
+      });
     mkDate = longDate: (lib.concatStringsSep "-" [
       (builtins.substring 0 4 longDate)
       (builtins.substring 4 2 longDate)
