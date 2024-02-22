@@ -1,19 +1,18 @@
 {
   description = "The official implementation library for the hypr config language";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    systems.url = "github:nix-systems/default-linux";
+  };
 
   outputs = {
     self,
     nixpkgs,
-    ...
+    systems,
   }: let
     inherit (nixpkgs) lib;
-    genSystems = lib.genAttrs [
-      # Add more systems if they are supported
-      "x86_64-linux"
-      "aarch64-linux"
-    ];
+    eachSystem = lib.genAttrs (import systems);
     pkgsFor = nixpkgs.legacyPackages;
     mkDate = longDate: (lib.concatStringsSep "-" [
       (builtins.substring 0 4 longDate)
@@ -29,10 +28,10 @@
       hyprlang-with-tests = hyprlang.override {doCheck = true;};
     };
 
-    packages = genSystems (system:
+    packages = eachSystem (system:
       (self.overlays.default null pkgsFor.${system})
       // {default = self.packages.${system}.hyprlang;});
 
-    formatter = genSystems (system: pkgsFor.${system}.alejandra);
+    formatter = eachSystem (system: pkgsFor.${system}.alejandra);
   };
 }
