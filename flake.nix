@@ -23,12 +23,15 @@
       (builtins.substring 6 2 longDate)
     ]);
   in {
-    overlays.default = _: prev: rec {
-      hyprlang = prev.callPackage ./nix/default.nix {
-        stdenv = prev.gcc13Stdenv;
-        version = "0.pre" + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
+    overlays = {
+      default = self.overlays.hyprlang;
+      hyprlang = _: prev: rec {
+        hyprlang = prev.callPackage ./nix/default.nix {
+          stdenv = prev.gcc13Stdenv;
+          version = "0.pre" + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
+        };
+        hyprlang-with-tests = hyprlang.override {doCheck = true;};
       };
-      hyprlang-with-tests = hyprlang.override {doCheck = true;};
     };
 
     packages = eachSystem (system:
