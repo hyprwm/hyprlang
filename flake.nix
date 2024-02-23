@@ -1,38 +1,45 @@
 {
   description = "The official implementation library for the hypr config language";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    systems.url = "github:nix-systems/default-linux";
+  };
 
   outputs = {
     self,
     nixpkgs,
-    ...
+    systems,
   }: let
     inherit (nixpkgs) lib;
-    genSystems = lib.genAttrs [
-      # Add more systems if they are supported
-      "x86_64-linux"
-      "aarch64-linux"
-    ];
-    pkgsFor = nixpkgs.legacyPackages;
+    eachSystem = lib.genAttrs (import systems);
+    pkgsFor = eachSystem (system:
+      import nixpkgs {
+        localSystem.system = system;
+        overlays = with self.overlays; [hyprlang];
+      });
     mkDate = longDate: (lib.concatStringsSep "-" [
       (builtins.substring 0 4 longDate)
       (builtins.substring 4 2 longDate)
       (builtins.substring 6 2 longDate)
     ]);
   in {
-    overlays.default = _: prev: rec {
-      hyprlang = prev.callPackage ./nix/default.nix {
-        stdenv = prev.gcc13Stdenv;
-        version = "0.pre" + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
+    overlays = {
+      default = self.overlays.hyprlang;
+      hyprlang = final: prev: {
+        hyprlang = final.callPackage ./nix/default.nix {
+          stdenv = final.gcc13Stdenv;
+          version = "0.pre" + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
+        };
+        hyprlang-with-tests = final.hyprlang.override {doCheck = true;};
       };
-      hyprlang-with-tests = hyprlang.override {doCheck = true;};
     };
 
-    packages = genSystems (system:
-      (self.overlays.default null pkgsFor.${system})
-      // {default = self.packages.${system}.hyprlang;});
+    packages = eachSystem (system: {
+      default = self.packages.${system}.hyprlang;
+      inherit (pkgsFor.${system}) hyprlang hyprlang-with-tests;
+    });
 
-    formatter = genSystems (system: pkgsFor.${system}.alejandra);
+    formatter = eachSystem (system: pkgsFor.${system}.alejandra);
   };
 }
