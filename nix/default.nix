@@ -17,7 +17,7 @@ stdenv.mkDerivation {
   meta = with lib; {
     homepage = "https://github.com/hyprwm/hyprlang";
     description = "The official implementation library for the hypr config language";
-    license = licenses.gpl3Plus;
+    license = licenses.bsd3;
     platforms = platforms.linux;
   };
 }
