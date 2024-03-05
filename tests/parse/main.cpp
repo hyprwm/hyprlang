@@ -85,6 +85,7 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testFloat", 0.F);
         config.addConfigValue("testVec", Hyprlang::SVector2D{69, 420});
         config.addConfigValue("testString", "");
+        config.addConfigValue("testStringColon", "");
         config.addConfigValue("testEnv", "");
         config.addConfigValue("testVar", (Hyprlang::INT)0);
         config.addConfigValue("testStringQuotes", "");
@@ -145,6 +146,7 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor1")), (Hyprlang::INT)0xFFFFFFFF);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), (Hyprlang::INT)0xFF000000);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), (Hyprlang::INT)0x22ffeeff);
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringColon")), std::string{"ee:ee:ee"});
 
         // test static values
         std::cout << " → Testing static values\n";
@@ -165,6 +167,8 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(barrelRoll, true);
         EXPECT(config.parseDynamic("testCategory:testValueHex", "0xaabbccdd").error, false);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), (Hyprlang::INT)0xAABBCCDD);
+        EXPECT(config.parseDynamic("testStringColon", "1:3:3:7").error, false);
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringColon")), std::string{"1:3:3:7"});
 
         // test dynamic special
         config.addSpecialConfigValue("specialGeneric:one", "boom", (Hyprlang::INT)0);

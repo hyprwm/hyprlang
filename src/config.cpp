@@ -264,13 +264,15 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
     CParseResult result;
 
     std::string  valueName;
+    std::string  catPrefix;
     for (auto& c : impl->categories) {
         valueName += c + ':';
+        catPrefix += c + ':';
     }
 
     valueName += command;
 
-    const auto VALUEONLYNAME = valueName.contains(":") ? valueName.substr(valueName.find_last_of(':') + 1) : valueName;
+    const auto VALUEONLYNAME = command.starts_with(catPrefix) ? command.substr(catPrefix.length()) : command;
 
     auto       VALUEIT = impl->values.find(valueName);
     if (VALUEIT == impl->values.end()) {
