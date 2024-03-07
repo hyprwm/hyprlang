@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-set(HYPRLANG_VERSION "0.4.1")
+set(HYPRLANG_VERSION "0.4.2")
 
 project(hyprlang
     VERSION ${HYPRLANG_VERSION}
