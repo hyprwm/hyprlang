@@ -16,6 +16,14 @@ set(LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR})
 
 configure_file(hyprlang.pc.in hyprlang.pc @ONLY)
 
+if(CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES DEBUG)
+    message(STATUS "Configuring hyprlang in Debug")
+    add_compile_definitions(HYPRLAND_DEBUG)
+else()
+    add_compile_options(-O3)
+    message(STATUS "Configuring hyprlang in Release")
+endif()
+
 set(CMAKE_CXX_STANDARD 23)
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/hyprlang.hpp")
