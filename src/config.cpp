@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <expected>
+#include <sstream>
 
 using namespace Hyprlang;
 extern "C" char** environ;
@@ -34,10 +35,14 @@ static std::string removeBeginEndSpacesTabs(std::string str) {
 }
 
 CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options) {
-    impl       = new CConfigImpl;
-    impl->path = path;
+    impl = new CConfigImpl;
 
-    if (!std::filesystem::exists(impl->path)) {
+    if (options.pathIsStream)
+        impl->rawConfigString = path;
+    else
+        impl->path = path;
+
+    if (!options.pathIsStream && !std::filesystem::exists(impl->path)) {
         if (!options.allowMissingConfig)
             throw "File does not exist";
     }
@@ -593,22 +598,63 @@ CParseResult CConfig::parse() {
         applyDefaultsToCat(*sc);
     }
 
-    bool fileExists = std::filesystem::exists(impl->path);
+    CParseResult fileParseResult;
 
-    // implies options.allowMissingConfig
-    if (impl->configOptions.allowMissingConfig && !fileExists)
-        return CParseResult{};
-    else if (!fileExists) {
-        CParseResult res;
-        res.setError("Config file is missing");
-        return res;
+    if (impl->rawConfigString.empty()) {
+        bool fileExists = std::filesystem::exists(impl->path);
+
+        // implies options.allowMissingConfig
+        if (impl->configOptions.allowMissingConfig && !fileExists)
+            return CParseResult{};
+        else if (!fileExists) {
+            CParseResult res;
+            res.setError("Config file is missing");
+            return res;
+        }
+
+        std::string canonical = std::filesystem::canonical(impl->path);
+
+        fileParseResult = parseFile(canonical.c_str());
+    } else {
+        fileParseResult = parseRawStream(impl->rawConfigString);
     }
 
-    std::string  canonical = std::filesystem::canonical(impl->path);
-
-    CParseResult fileParseResult = parseFile(canonical.c_str());
-
     return fileParseResult;
+}
+
+CParseResult CConfig::parseRawStream(const std::string& stream) {
+    CParseResult      result;
+
+    std::string       line    = "";
+    int               linenum = 1;
+
+    std::stringstream str(stream);
+
+    while (std::getline(str, line)) {
+        const auto RET = parseLine(line);
+
+        if (RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
+            if (!impl->parseError.empty())
+                impl->parseError += "\n";
+            impl->parseError += std::format("Config error at line {}: {}", linenum, RET.errorStdString);
+            result.setError(impl->parseError);
+        }
+
+        ++linenum;
+    }
+
+    if (!impl->categories.empty()) {
+        if (impl->parseError.empty() || impl->configOptions.throwAllErrors) {
+            if (!impl->parseError.empty())
+                impl->parseError += "\n";
+            impl->parseError += std::format("Config error: Unclosed category at EOF");
+            result.setError(impl->parseError);
+        }
+
+        impl->categories.clear();
+    }
+
+    return result;
 }
 
 CParseResult CConfig::parseFile(const char* file) {

@@ -107,6 +107,13 @@ namespace Hyprlang {
             Don't throw on a missing config file. Carry on as if nothing happened.
         */
         bool allowMissingConfig = false;
+
+        /*!
+            \since 0.4.2
+
+            Treat configPath as a raw config stream.
+        */
+        bool pathIsStream = false;
     };
 
     /*!
@@ -429,6 +436,7 @@ namespace Hyprlang {
         void         clearState();
         void         applyDefaultsToCat(SSpecialCategory& cat);
         void         retrieveKeysForCat(const char* category, const char*** out, size_t* len);
+        CParseResult parseRawStream(const std::string& stream);
     };
 };
 #endif
