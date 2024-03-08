@@ -453,4 +453,9 @@ namespace Hyprlang {
         CParseResult parseRawStream(const std::string& stream);
     };
 };
+
+#ifndef HYPRLANG_INTERNAL
+#undef HYPRLANG_END_MAGIC
+#endif
+
 #endif

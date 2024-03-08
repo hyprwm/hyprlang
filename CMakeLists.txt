@@ -24,6 +24,8 @@ else()
     message(STATUS "Configuring hyprlang in Release")
 endif()
 
+add_compile_definitions(HYPRLANG_INTERNAL)
+
 set(CMAKE_CXX_STANDARD 23)
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/hyprlang.hpp")
