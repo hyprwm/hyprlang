@@ -13,6 +13,8 @@ class CConfigImpl;
 struct SConfigDefaultValue;
 struct SSpecialCategory;
 
+#define HYPRLANG_END_MAGIC 0x1337BEEF
+
 namespace Hyprlang {
 
     struct SVector2D;
@@ -94,33 +96,42 @@ namespace Hyprlang {
         /*! 
             Don't throw errors on missing values.
         */
-        bool verifyOnly = false;
+        int verifyOnly = false;
 
         /*! 
             Return all errors instead of just the first
         */
-        bool throwAllErrors = false;
+        int throwAllErrors = false;
 
         /*!
             \since 0.2.0
 
             Don't throw on a missing config file. Carry on as if nothing happened.
         */
-        bool allowMissingConfig = false;
+        int allowMissingConfig = false;
 
         /*!
             \since 0.4.2
 
             Treat configPath as a raw config stream.
         */
-        bool pathIsStream = false;
+        int pathIsStream = false;
+
+        // INTERNAL: DO NOT MODIFY
+        int __internal_struct_end = HYPRLANG_END_MAGIC;
     };
 
     /*!
         Generic struct for options for handlers
     */
     struct SHandlerOptions {
+        /*!
+            Allow flags for this handler
+        */
         bool allowFlags = false;
+
+        // INTERNAL: DO NOT MODIFY
+        int __internal_struct_end = HYPRLANG_END_MAGIC;
     };
 
     /*!
@@ -137,7 +148,7 @@ namespace Hyprlang {
         /*!
             don't pop up an error if the config value is missing
         */
-        bool ignoreMissing = false;
+        int ignoreMissing = false;
 
         /*!
             Make this category an anonymous special one.
@@ -148,7 +159,10 @@ namespace Hyprlang {
 
             \since 0.4.0
         */
-        bool anonymousKeyBased = false;
+        int anonymousKeyBased = false;
+
+        // INTERNAL: DO NOT MODIFY
+        int __internal_struct_end = HYPRLANG_END_MAGIC;
     };
 
     /*!

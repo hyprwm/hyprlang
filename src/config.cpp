@@ -7,6 +7,7 @@
 #include <cmath>
 #include <expected>
 #include <sstream>
+#include <cstring>
 
 using namespace Hyprlang;
 extern "C" char** environ;
@@ -14,6 +15,15 @@ extern "C" char** environ;
 // defines
 inline constexpr const char* ANONYMOUS_KEY = "__hyprlang_internal_anonymous_key";
 //
+
+static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t maxSize) {
+    for (size_t off = startOffset; off < maxSize; off += 4) {
+        if (*(int*)((unsigned char*)begin + off) == int{HYPRLANG_END_MAGIC})
+            return off;
+    }
+
+    return 0;
+}
 
 static std::string removeBeginEndSpacesTabs(std::string str) {
     if (str.empty())
@@ -34,7 +44,10 @@ static std::string removeBeginEndSpacesTabs(std::string str) {
     return str;
 }
 
-CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options) {
+CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options_) {
+    SConfigOptions options;
+    std::memcpy(&options, &options_, seekABIStructSize(&options_, 16, sizeof(SConfigOptions)));
+
     impl = new CConfigImpl;
 
     if (options.pathIsStream)
@@ -110,7 +123,10 @@ void CConfig::removeSpecialConfigValue(const char* cat, const char* name) {
     std::erase_if(IT->get()->defaultValues, [name](const auto& other) { return other.first == name; });
 }
 
-void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions options) {
+void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions options_) {
+    SSpecialCategoryOptions options;
+    std::memcpy(&options, &options_, seekABIStructSize(&options_, 8, sizeof(SSpecialCategoryOptions)));
+
     const auto PDESC          = impl->specialCategoryDescriptors.emplace_back(std::make_unique<SSpecialCategoryDescriptor>()).get();
     PDESC->name               = name;
     PDESC->key                = options.key ? options.key : "";
@@ -738,7 +754,9 @@ CConfigValue* CConfig::getSpecialConfigValuePtr(const char* category, const char
     return nullptr;
 }
 
-void CConfig::registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options) {
+void CConfig::registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options_) {
+    SHandlerOptions options;
+    std::memcpy(&options, &options_, seekABIStructSize(&options_, 0, sizeof(SHandlerOptions)));
     impl->handlers.push_back(SHandler{name, options, func});
 }
 
