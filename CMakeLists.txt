@@ -37,7 +37,7 @@ target_include_directories( hyprlang
 )
 set_target_properties(hyprlang PROPERTIES
     VERSION ${HYPRLANG_VERSION}
-    SOVERSION 1
+    SOVERSION 2
     PUBLIC_HEADER include/hyprlang.hpp)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
