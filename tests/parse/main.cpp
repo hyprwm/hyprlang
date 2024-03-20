@@ -89,6 +89,7 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testEnv", "");
         config.addConfigValue("testVar", (Hyprlang::INT)0);
         config.addConfigValue("testStringQuotes", "");
+        config.addConfigValue("testStringRecursive", "");
         config.addConfigValue("testCategory:testValueInt", (Hyprlang::INT)0);
         config.addConfigValue("testCategory:testValueHex", (Hyprlang::INT)0xA);
         config.addConfigValue("testCategory:nested1:testValueNest", (Hyprlang::INT)0);
@@ -178,11 +179,15 @@ int main(int argc, char** argv, char** envp) {
         // test variables
         std::cout << " → Testing variables\n";
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 13371337);
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringRecursive")), std::string{"abc"});
 
         // test dynamic variables
         std::cout << " → Testing dynamic variables\n";
         EXPECT(config.parseDynamic("$MY_VAR_2 = 420").error, false);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testVar")), 1337420);
+
+        EXPECT(config.parseDynamic("$RECURSIVE1 = d").error, false);
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringRecursive")), std::string{"dbc"});
 
         // test env variables
         std::cout << " → Testing env variables\n";

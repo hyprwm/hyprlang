@@ -519,14 +519,14 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             return result;
         }
 
-        if (*LHS.begin() == '$')
-            return parseVariable(LHS, RHS, dynamic);
+        const bool ISVARIABLE = *LHS.begin() == '$';
 
         // limit unwrapping iterations to 100. if exceeds, raise error
         for (size_t i = 0; i < 100; ++i) {
             bool anyMatch = false;
             for (auto& var : impl->variables) {
-                const auto LHSIT = LHS.find("$" + var.name);
+                // don't parse LHS variables if this is a variable...
+                const auto LHSIT = ISVARIABLE ? std::string::npos : LHS.find("$" + var.name);
                 const auto RHSIT = RHS.find("$" + var.name);
 
                 if (LHSIT != std::string::npos)
@@ -550,6 +550,9 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 return result;
             }
         }
+
+        if (ISVARIABLE)
+            return parseVariable(LHS, RHS, dynamic);
 
         bool found = false;
         for (auto& h : impl->handlers) {
