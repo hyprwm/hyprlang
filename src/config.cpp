@@ -513,12 +513,14 @@ CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& r
 CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     CParseResult result;
 
-    auto         commentPos  = line.find('#');
-    size_t       lastHashPos = 0;
+    line = removeBeginEndSpacesTabs(line);
+
+    auto   commentPos  = line.find('#');
+    size_t lastHashPos = 0;
 
     while (commentPos != std::string::npos) {
         bool escaped = false;
-        if (commentPos < line.length() - 1) {
+        if (commentPos < line.length() - 1 && commentPos != 0) {
             if (line[commentPos + 1] == '#') {
                 lastHashPos = commentPos + 2;
                 escaped     = true;
