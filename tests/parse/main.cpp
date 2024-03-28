@@ -199,6 +199,8 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "b")), 2);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:one", "value")), 1);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:two", "value")), 2);
+        EXPECT(config.parseDynamic("special[b]:value = 3").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "b")), 3);
 
         // test dynamic special variable
         EXPECT(config.parseDynamic("$SPECIALVAL1 = 2").error, false);

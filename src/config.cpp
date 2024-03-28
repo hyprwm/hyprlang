@@ -301,7 +301,37 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
     const auto VALUEONLYNAME = command.starts_with(catPrefix) ? command.substr(catPrefix.length()) : command;
 
-    auto       VALUEIT = impl->values.find(valueName);
+    // FIXME: this will bug with nested.
+    if (valueName.contains('[') && valueName.contains(']')) {
+        const auto L = valueName.find_first_of('[');
+        const auto R = valueName.find_last_of(']');
+
+        if (L < R) {
+            const auto CATKEY       = valueName.substr(L + 1, R - L - 1);
+            impl->currentSpecialKey = CATKEY;
+
+            valueName = valueName.substr(0, L) + valueName.substr(R + 1);
+
+            // if it doesn't exist, make it
+            for (auto& sc : impl->specialCategoryDescriptors) {
+                if (sc->key.empty() || !valueName.starts_with(sc->name))
+                    continue;
+
+                // bingo
+                const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
+                PCAT->descriptor = sc.get();
+                PCAT->name       = sc->name;
+                PCAT->key        = sc->key;
+                addSpecialConfigValue(sc->name.c_str(), sc->key.c_str(), CConfigValue(CATKEY.c_str()));
+
+                applyDefaultsToCat(*PCAT);
+
+                PCAT->values[sc->key].setFrom(CATKEY);
+            }
+        }
+    }
+
+    auto VALUEIT = impl->values.find(valueName);
     if (VALUEIT == impl->values.end()) {
         // it might be in a special category
         bool found = false;
