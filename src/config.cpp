@@ -485,12 +485,16 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
     line = removeBeginEndSpacesTabs(line);
 
-    auto   commentPos  = line.find('#');
+    auto commentPos = line.find('#');
+
+    if (commentPos == 0)
+        return result;
+
     size_t lastHashPos = 0;
 
     while (commentPos != std::string::npos) {
         bool escaped = false;
-        if (commentPos < line.length() - 1 && commentPos != 0) {
+        if (commentPos < line.length() - 1) {
             if (line[commentPos + 1] == '#') {
                 lastHashPos = commentPos + 2;
                 escaped     = true;
@@ -508,9 +512,12 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
     line = removeBeginEndSpacesTabs(line);
 
+    if (line.empty())
+        return result;
+
     auto equalsPos = line.find('=');
 
-    if (equalsPos == std::string::npos && !line.ends_with("{") && line != "}" && !line.empty()) {
+    if (equalsPos == std::string::npos && !line.ends_with("{") && line != "}") {
         // invalid line
         result.setError("Invalid config line");
         return result;
@@ -579,7 +586,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
         if (ret.error)
             return ret;
-    } else if (!line.empty()) {
+    } else {
         // has to be a set
         if (line.contains("}")) {
             // easiest. } or invalid.
