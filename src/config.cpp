@@ -31,27 +31,6 @@ static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t ma
     return 0;
 }
 
-static std::string removeBeginSpacesTabs(const std::string& str) {
-    if (str.empty())
-        return str;
-
-    size_t firstNonSpaceTab = str.find_first_not_of(" \t");
-
-    return str.substr(firstNonSpaceTab, str.length() - firstNonSpaceTab);
-}
-
-static std::string removeEndSpacesTabs(const std::string& str) {
-    if (str.empty())
-        return str;
-
-    size_t lastNonSpaceTab = str.find_last_not_of(" \t");
-
-    if (lastNonSpaceTab == std::string::npos)
-        return str;
-
-    return str.substr(0, lastNonSpaceTab + 1);
-}
-
 static std::string removeBeginEndSpacesTabs(std::string str) {
     if (str.empty())
         return str;
@@ -504,7 +483,7 @@ CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& r
 CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     CParseResult result;
 
-    line = removeBeginSpacesTabs(line);
+    line = removeBeginEndSpacesTabs(line);
 
     auto   commentPos  = line.find('#');
     size_t lastHashPos = 0;
@@ -527,7 +506,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
         }
     }
 
-    line = removeEndSpacesTabs(line);
+    line = removeBeginEndSpacesTabs(line);
 
     auto equalsPos = line.find('=');
 
