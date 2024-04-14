@@ -9,6 +9,8 @@
 #include <sstream>
 #include <cstring>
 
+#include "VarList.hpp"
+
 using namespace Hyprlang;
 
 #ifdef __APPLE__
@@ -510,6 +512,18 @@ CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& r
     return result;
 }
 
+void CConfigImpl::parseComment(const std::string& comment) {
+    const auto COMMENT = removeBeginEndSpacesTabs(comment);
+
+    if (!COMMENT.starts_with("hyprlang"))
+        return;
+
+    CVarList args(COMMENT, 0, 's', true);
+
+    if (args[1] == "noerror")
+        currentFlags.noError = args[2] == "true" || args[2] == "yes" || args[2] == "enable" || args[2] == "enabled" || args[2] == "set";
+}
+
 CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     CParseResult result;
 
@@ -517,8 +531,10 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
     auto commentPos = line.find('#');
 
-    if (commentPos == 0)
+    if (commentPos == 0) {
+        impl->parseComment(line.substr(1));
         return result;
+    }
 
     size_t lastHashPos = 0;
 
@@ -737,7 +753,7 @@ CParseResult CConfig::parseFile(const char* file) {
 
         const auto RET = parseLine(line);
 
-        if (RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
+        if (!impl->currentFlags.noError && RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
             if (!impl->parseError.empty())
                 impl->parseError += "\n";
             impl->parseError += std::format("Config error in file {} at line {}: {}", file, linenum, RET.errorStdString);
