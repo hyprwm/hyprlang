@@ -14,7 +14,7 @@ cmake --build ./build --config Release --target hyprlang -j`nproc 2>/dev/null ||
 ```
 Install with:
 ```sh
-cmake --install ./build
+sudo cmake --install ./build
 ```
 
 ## Example config
