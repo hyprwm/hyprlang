@@ -98,6 +98,7 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testCategory:testColor1", (Hyprlang::INT)0);
         config.addConfigValue("testCategory:testColor2", (Hyprlang::INT)0);
         config.addConfigValue("testCategory:testColor3", (Hyprlang::INT)0);
+        config.addConfigValue("flagsStuff:value", (Hyprlang::INT)0);
         config.addConfigValue("myColors:pink", (Hyprlang::INT)0);
         config.addConfigValue("myColors:green", (Hyprlang::INT)0);
         config.addConfigValue("myColors:random", (Hyprlang::INT)0);
@@ -170,6 +171,8 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testValueHex")), (Hyprlang::INT)0xAABBCCDD);
         EXPECT(config.parseDynamic("testStringColon", "1:3:3:7").error, false);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringColon")), std::string{"1:3:3:7"});
+        EXPECT(config.parseDynamic("flagsStuff:value = 69").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("flagsStuff:value")), (Hyprlang::INT)69);
 
         // test dynamic special
         config.addSpecialConfigValue("specialGeneric:one", "boom", (Hyprlang::INT)0);

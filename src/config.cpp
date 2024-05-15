@@ -620,7 +620,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             if (!h.options.allowFlags && h.name != LHS)
                 continue;
 
-            if (h.options.allowFlags && !LHS.starts_with(h.name))
+            if (h.options.allowFlags && (!LHS.starts_with(h.name) || LHS.contains(':') /* avoid cases where a category is called the same as a handler */))
                 continue;
 
             ret   = h.func(LHS.c_str(), RHS.c_str());

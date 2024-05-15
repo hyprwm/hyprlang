@@ -88,7 +88,7 @@ class CConfigImpl {
 
     Hyprlang::SConfigOptions                                 configOptions;
 
-    void parseComment(const std::string& comment);
+    void                                                     parseComment(const std::string& comment);
 
     struct {
         bool noError = false;
