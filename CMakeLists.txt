@@ -44,6 +44,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # for std::expected.
     # probably evil. Arch's clang is very outdated tho...
     target_compile_options(hyprlang PUBLIC -std=gnu++2b -D__cpp_concepts=202002L -Wno-macro-redefined)
+    add_compile_options(-stdlib=libc++)
+    add_link_options(-stdlib=libc++ -lc++abi)
+    message(STATUS "Using clang++ to compile hyprlang")
 endif()
 
 install(TARGETS hyprlang)
