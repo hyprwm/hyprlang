@@ -8,10 +8,11 @@
 #include <expected>
 #include <sstream>
 #include <cstring>
-
-#include "VarList.hpp"
+#include <hyprutils/string/VarList.hpp>
+#include <hyprutils/string/String.hpp>
 
 using namespace Hyprlang;
+using namespace Hyprutils::String;
 
 #ifdef __APPLE__
 #include <crt_externs.h>
@@ -31,25 +32,6 @@ static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t ma
     }
 
     return 0;
-}
-
-static std::string removeBeginEndSpacesTabs(std::string str) {
-    if (str.empty())
-        return str;
-
-    int countBefore = 0;
-    while (str[countBefore] == ' ' || str[countBefore] == '\t') {
-        countBefore++;
-    }
-
-    int countAfter = 0;
-    while ((int)str.length() - countAfter - 1 >= 0 && (str[str.length() - countAfter - 1] == ' ' || str[str.length() - 1 - countAfter] == '\t')) {
-        countAfter++;
-    }
-
-    str = str.substr(countBefore, str.length() - countBefore - countAfter);
-
-    return str;
 }
 
 CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options_) {
@@ -177,62 +159,27 @@ void CConfig::commence() {
     }
 }
 
-static bool isNumber(const std::string& str, bool allowfloat) {
-
-    std::string copy = str;
-    if (*copy.begin() == '-')
-        copy = copy.substr(1);
-
-    if (copy.empty())
-        return false;
-
-    bool point = !allowfloat;
-    for (auto& c : copy) {
-        if (c == '.') {
-            if (point)
-                return false;
-            point = true;
-            continue;
-        }
-
-        if (!std::isdigit(c))
-            return false;
-    }
-
-    return true;
-}
-
-static void replaceAll(std::string& str, const std::string& from, const std::string& to) {
-    if (from.empty())
-        return;
-    size_t pos = 0;
-    while ((pos = str.find(from, pos)) != std::string::npos) {
-        str.replace(pos, from.length(), to);
-        pos += to.length();
-    }
-}
-
 static std::expected<int64_t, std::string> configStringToInt(const std::string& VALUE) {
     if (VALUE.starts_with("0x")) {
         // Values with 0x are hex
         const auto VALUEWITHOUTHEX = VALUE.substr(2);
         return stoll(VALUEWITHOUTHEX, nullptr, 16);
     } else if (VALUE.starts_with("rgba(") && VALUE.ends_with(')')) {
-        const auto VALUEWITHOUTFUNC = removeBeginEndSpacesTabs(VALUE.substr(5, VALUE.length() - 6));
+        const auto VALUEWITHOUTFUNC = trim(VALUE.substr(5, VALUE.length() - 6));
 
         // try doing it the comma way first
         if (std::count(VALUEWITHOUTFUNC.begin(), VALUEWITHOUTFUNC.end(), ',') == 3) {
             // cool
             std::string rolling = VALUEWITHOUTFUNC;
-            auto        r       = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto        r       = configStringToInt(trim(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            auto g              = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto g              = configStringToInt(trim(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            auto b              = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto b              = configStringToInt(trim(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
             uint8_t a           = 0;
             try {
-                a = std::round(std::stof(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(',')))) * 255.f);
+                a = std::round(std::stof(trim(rolling.substr(0, rolling.find(',')))) * 255.f);
             } catch (std::exception& e) { return std::unexpected("failed parsing " + VALUEWITHOUTFUNC); }
 
             if (!r.has_value() || !g.has_value() || !b.has_value())
@@ -249,17 +196,17 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
         return std::unexpected("rgba() expects length of 8 characters (4 bytes) or 4 comma separated values");
 
     } else if (VALUE.starts_with("rgb(") && VALUE.ends_with(')')) {
-        const auto VALUEWITHOUTFUNC = removeBeginEndSpacesTabs(VALUE.substr(4, VALUE.length() - 5));
+        const auto VALUEWITHOUTFUNC = trim(VALUE.substr(4, VALUE.length() - 5));
 
         // try doing it the comma way first
         if (std::count(VALUEWITHOUTFUNC.begin(), VALUEWITHOUTFUNC.end(), ',') == 2) {
             // cool
             std::string rolling = VALUEWITHOUTFUNC;
-            auto        r       = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto        r       = configStringToInt(trim(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            auto g              = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto g              = configStringToInt(trim(rolling.substr(0, rolling.find(','))));
             rolling             = rolling.substr(rolling.find(',') + 1);
-            auto b              = configStringToInt(removeBeginEndSpacesTabs(rolling.substr(0, rolling.find(','))));
+            auto b              = configStringToInt(trim(rolling.substr(0, rolling.find(','))));
 
             if (!r.has_value() || !g.has_value() || !b.has_value())
                 return std::unexpected("failed parsing " + VALUEWITHOUTFUNC);
@@ -513,7 +460,7 @@ CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& r
 }
 
 void CConfigImpl::parseComment(const std::string& comment) {
-    const auto COMMENT = removeBeginEndSpacesTabs(comment);
+    const auto COMMENT = trim(comment);
 
     if (!COMMENT.starts_with("hyprlang"))
         return;
@@ -527,7 +474,7 @@ void CConfigImpl::parseComment(const std::string& comment) {
 CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     CParseResult result;
 
-    line = removeBeginEndSpacesTabs(line);
+    line = trim(line);
 
     auto commentPos = line.find('#');
 
@@ -556,7 +503,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
         }
     }
 
-    line = removeBeginEndSpacesTabs(line);
+    line = trim(line);
 
     if (line.empty())
         return result;
@@ -572,8 +519,8 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     if (equalsPos != std::string::npos) {
         // set value or call handler
         CParseResult ret;
-        auto         LHS = removeBeginEndSpacesTabs(line.substr(0, equalsPos));
-        auto         RHS = removeBeginEndSpacesTabs(line.substr(equalsPos + 1));
+        auto         LHS = trim(line.substr(0, equalsPos));
+        auto         RHS = trim(line.substr(equalsPos + 1));
 
         if (LHS.empty()) {
             result.setError("Empty lhs.");
@@ -591,9 +538,9 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 const auto RHSIT = RHS.find("$" + var.name);
 
                 if (LHSIT != std::string::npos)
-                    replaceAll(LHS, "$" + var.name, var.value);
+                    replaceInString(LHS, "$" + var.name, var.value);
                 if (RHSIT != std::string::npos)
-                    replaceAll(RHS, "$" + var.name, var.value);
+                    replaceInString(RHS, "$" + var.name, var.value);
 
                 if (RHSIT == std::string::npos && LHSIT == std::string::npos)
                     continue;
@@ -657,7 +604,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             }
 
             line.pop_back();
-            line = removeBeginEndSpacesTabs(line);
+            line = trim(line);
             impl->categories.push_back(line);
         }
     }
