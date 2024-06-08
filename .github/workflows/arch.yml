@@ -2,39 +2,6 @@ name: Build & Test (Arch)
 
 on: [push, pull_request, workflow_dispatch]
 jobs:
-  gcc:
-    name: "gcc build / clang test"
-    runs-on: ubuntu-latest
-    container:
-      image: archlinux
-    steps:
-      - name: Checkout repository actions
-        uses: actions/checkout@v4
-        with:
-          sparse-checkout: .github/actions
-
-      - name: Get required pkgs
-        run: |
-          sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
-          pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang libc++
-
-      - name: Build hyprlang with gcc
-        run: |
-          CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr -S . -B ./build
-          CC="/usr/bin/gcc" CXX="/usr/bin/g++" cmake --build ./build --config Release --target hyprlang -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
-          cmake --install ./build
-
-      - name: Build tests with clang
-        run: |
-          rm -rf ./build
-          CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_CXX_FLAGS="-stdlib=libc++" -S . -B ./build
-          CC="/usr/bin/clang" CXX="/usr/bin/clang++" cmake --build ./build --config Release --target tests -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
-
-      - name: Run tests
-        run: |
-          cd ./build && ctest --output-on-failure
-
   asan:
     name: "gcc build / ASan tests"
     runs-on: ubuntu-latest
@@ -50,7 +17,11 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git
+
+      - name: Get hyprutils-git
+        run: |
+          git clone https://github.com/hyprwm/hyprutils && cd hyprutils && cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr -B build && cmake --build build --target hyprutils && cmake --install build
 
       - name: Build with gcc
         run: |
@@ -77,7 +48,11 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git
+
+      - name: Get hyprutils-git
+        run: |
+          git clone https://github.com/hyprwm/hyprutils && cd hyprutils && cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr -B build && cmake --build build --target hyprutils && cmake --install build
 
       - name: Build with gcc
         run: |
@@ -104,7 +79,11 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git
+
+      - name: Get hyprutils-git
+        run: |
+          git clone https://github.com/hyprwm/hyprutils && cd hyprutils && cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr -B build && cmake --build build --target hyprutils && cmake --install build
 
       - name: Build with gcc
         run: |
@@ -131,7 +110,11 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang libc++
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang libc++ git
+
+      - name: Get hyprutils-git
+        run: |
+          git clone https://github.com/hyprwm/hyprutils && cd hyprutils && cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:PATH=/usr -B build && cmake --build build --target hyprutils && cmake --install build
 
       - name: Build hyprlang with clang
         run: |

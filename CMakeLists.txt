@@ -28,6 +28,11 @@ add_compile_definitions(HYPRLANG_INTERNAL)
 
 set(CMAKE_CXX_STANDARD 23)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(deps REQUIRED IMPORTED_TARGET
+    hyprutils>=0.1.1
+)
+
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/hyprlang.hpp")
 
 add_library(hyprlang SHARED ${SRCFILES})
@@ -39,6 +44,8 @@ set_target_properties(hyprlang PROPERTIES
     VERSION ${HYPRLANG_VERSION}
     SOVERSION 2
     PUBLIC_HEADER include/hyprlang.hpp)
+
+target_link_libraries(hyprlang PkgConfig::deps)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # for std::expected.
@@ -55,12 +62,12 @@ install(TARGETS hyprlang)
 add_custom_target(tests)
 
 add_executable(hyprlang_test "tests/parse/main.cpp")
-target_link_libraries(hyprlang_test PRIVATE hyprlang)
+target_link_libraries(hyprlang_test PRIVATE hyprlang hyprutils)
 add_test(NAME "Parsing" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests COMMAND hyprlang_test "parse")
 add_dependencies(tests hyprlang_test)
 
 add_executable(hyprlang_fuzz "tests/fuzz/main.cpp")
-target_link_libraries(hyprlang_fuzz PRIVATE hyprlang)
+target_link_libraries(hyprlang_fuzz PRIVATE hyprlang hyprutils)
 add_test(NAME "Fuzz" WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests COMMAND hyprlang_fuzz "fuzz")
 add_dependencies(tests hyprlang_fuzz)
 
