@@ -2,6 +2,8 @@
   lib,
   stdenv,
   cmake,
+  hyprutils,
+  pkg-config,
   version ? "git",
   doCheck ? false,
 }:
@@ -10,7 +12,12 @@ stdenv.mkDerivation {
   inherit version doCheck;
   src = ../.;
 
-  nativeBuildInputs = [cmake];
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+  ];
+
+  buildInputs = [hyprutils];
 
   outputs = ["out" "dev"];
 
