@@ -21,6 +21,10 @@ stdenv.mkDerivation {
 
   outputs = ["out" "dev"];
 
+  cmakeBuildType = "RelWithDebInfo";
+
+  dontStrip = true;
+
   meta = with lib; {
     homepage = "https://github.com/hyprwm/hyprlang";
     description = "The official implementation library for the hypr config language";
