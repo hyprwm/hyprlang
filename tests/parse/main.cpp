@@ -159,6 +159,8 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), (Hyprlang::INT)0xFF000000);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), (Hyprlang::INT)0x22ffeeff);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringColon")), std::string{"ee:ee:ee"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("categoryKeyword")), std::string{"oops, this one shouldn't call the handler, not fun"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testCategory:nested1:categoryKeyword")), std::string{"this one should not either"});
 
         // test static values
         std::cout << " → Testing static values\n";
