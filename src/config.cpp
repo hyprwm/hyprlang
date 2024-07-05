@@ -575,17 +575,15 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 while ((colon = h.name.find(":", idx)) != std::string::npos && impl->categories.size() > depth) {
                     auto actual = h.name.substr(idx, colon - idx);
 
-                    if (actual != impl->categories[depth]) {
+                    if (actual != impl->categories[depth])
                         break;
-                    }
 
                     idx = colon + 1;
                     ++depth;
                 }
 
-                if (depth != impl->categories.size() || h.name.substr(idx) != LHS) {
+                if (depth != impl->categories.size() || h.name.substr(idx) != LHS)
                     continue;
-                }
             }
 
             if (h.options.allowFlags && (!LHS.starts_with(h.name) || LHS.contains(':') /* avoid cases where a category is called the same as a handler */))
