@@ -108,6 +108,16 @@ int main(int argc, char** argv, char** envp) {
         config.registerHandler(&handleFlagsTest, "flags", {true});
         config.registerHandler(&handleSource, "source", {false});
 
+        bool lambaCaptureFlag = false;
+
+        config.registerHandler(
+            [&lambaCaptureFlag](const char* name, const char* value) {
+                lambaCaptureFlag = true;
+
+                return Hyprlang::CParseResult();
+            },
+            "lambaCapture", {false});
+
         config.addSpecialCategory("special", {"key"});
         config.addSpecialConfigValue("special", "value", (Hyprlang::INT)0);
 
@@ -161,6 +171,7 @@ int main(int argc, char** argv, char** envp) {
         std::cout << " → Testing handlers\n";
         EXPECT(barrelRoll, true);
         EXPECT(flagsFound, std::string{"abc"});
+        EXPECT(lambaCaptureFlag, true);
 
         // test dynamic
         std::cout << " → Testing dynamic\n";

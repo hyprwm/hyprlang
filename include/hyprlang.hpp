@@ -6,6 +6,7 @@
 #include <any>
 #include <memory>
 #include <string>
+#include <functional>
 #include <fstream>
 #include <vector>
 
@@ -168,7 +169,7 @@ namespace Hyprlang {
     /*!
         typedefs
     */
-    typedef CParseResult (*PCONFIGHANDLERFUNC)(const char* COMMAND, const char* VALUE);
+    typedef std::function<CParseResult(const char*, const char*)> PCONFIGHANDLERFUNC;
     typedef CParseResult (*PCONFIGCUSTOMVALUEHANDLERFUNC)(const char* VALUE, void** data);
     typedef void (*PCONFIGCUSTOMVALUEDESTRUCTOR)(void** data);
 
