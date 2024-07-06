@@ -17,7 +17,7 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git pixman
 
       - name: Get hyprutils-git
         run: |
@@ -48,7 +48,7 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git pixman
 
       - name: Get hyprutils-git
         run: |
@@ -79,7 +79,7 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang git pixman
 
       - name: Get hyprutils-git
         run: |
@@ -110,7 +110,7 @@ jobs:
         run: |
           sed -i 's/SigLevel    = Required DatabaseOptional/SigLevel    = Optional TrustAll/' /etc/pacman.conf
           pacman --noconfirm --noprogressbar -Syyu
-          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang libc++ git
+          pacman --noconfirm --noprogressbar -Sy gcc base-devel cmake clang libc++ git pixman
 
       - name: Get hyprutils-git
         run: |
