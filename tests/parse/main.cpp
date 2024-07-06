@@ -174,9 +174,9 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(barrelRoll, true);
         EXPECT(flagsFound, std::string{"abc"});
 
-        EXPECT(categoryKeywordActualValues[0], "we are having fun");
-        EXPECT(categoryKeywordActualValues[1], "so much fun");
-        EXPECT(categoryKeywordActualValues[2], "im the fun one at parties");
+        EXPECT(categoryKeywordActualValues.at(0), "we are having fun");
+        EXPECT(categoryKeywordActualValues.at(1), "so much fun");
+        EXPECT(categoryKeywordActualValues.at(2), "im the fun one at parties");
 
         // test dynamic
         std::cout << " → Testing dynamic\n";
