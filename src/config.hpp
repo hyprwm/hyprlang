@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+static const char* MULTILINE_SPACE_CHARSET = " \t";
+
 struct SHandler {
     std::string                  name = "";
     Hyprlang::SHandlerOptions    options;
@@ -31,6 +33,13 @@ enum eDataType {
     CONFIGDATATYPE_STR,
     CONFIGDATATYPE_VEC2,
     CONFIGDATATYPE_CUSTOM,
+};
+
+struct SMultiLine {
+    std::string buffer;
+    char        delimiter = 0;
+    bool        active    = false;
+    std::string lhs;
 };
 
 // CUSTOM is stored as STR!!
@@ -83,6 +92,8 @@ class CConfigImpl {
     std::vector<std::string>                                 categories;
     std::string                                              currentSpecialKey      = "";
     SSpecialCategory*                                        currentSpecialCategory = nullptr; // if applicable
+    bool                                                     isSpecialCategory      = false;
+    SMultiLine                                               multiline;
 
     std::string                                              parseError = "";
 

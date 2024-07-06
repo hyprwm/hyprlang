@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <format>
+#include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <expected>
@@ -473,8 +474,9 @@ void CConfigImpl::parseComment(const std::string& comment) {
 
 CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     CParseResult result;
+    bool         shouldPreverseLeadingWhitespace = impl->multiline.delimiter == '\\';
 
-    line = trim(line);
+    line = shouldPreverseLeadingWhitespace ? line.substr(0, line.find_last_not_of(MULTILINE_SPACE_CHARSET) + 1) : trim(line);
 
     auto commentPos = line.find('#');
 
@@ -496,6 +498,8 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
         if (!escaped) {
             line = line.substr(0, commentPos);
+            // there might be trailing whitespaces after the comment that weren't previous trimmed
+            line = line.substr(0, line.find_last_not_of(MULTILINE_SPACE_CHARSET) + 1);
             break;
         } else {
             line       = line.substr(0, commentPos + 1) + line.substr(commentPos + 2);
@@ -503,27 +507,29 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
         }
     }
 
-    line = trim(line);
+    if (line.empty()) {
+        if (impl->multiline.active)
+            result.setError("Found empty line while parsing multiline value");
 
-    if (line.empty())
         return result;
+    }
 
     auto equalsPos = line.find('=');
 
-    if (equalsPos == std::string::npos && !line.ends_with("{") && line != "}") {
+    if (equalsPos == std::string::npos && !line.ends_with("{") && line != "}" && !impl->multiline.active) {
         // invalid line
         result.setError("Invalid config line");
         return result;
     }
 
-    if (equalsPos != std::string::npos) {
+    if (equalsPos != std::string::npos || impl->multiline.active) {
         // set value or call handler
         CParseResult ret;
-        auto         LHS = trim(line.substr(0, equalsPos));
-        auto         RHS = trim(line.substr(equalsPos + 1));
+        auto         LHS = impl->multiline.active ? impl->multiline.lhs : trim(line.substr(0, equalsPos));
+        auto         RHS = impl->multiline.active ? line : trim(line.substr(equalsPos + 1));
 
         if (LHS.empty()) {
-            result.setError("Empty lhs.");
+            result.setError("Empty lhs");
             return result;
         }
 
@@ -561,6 +567,34 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
         if (ISVARIABLE)
             return parseVariable(LHS, RHS, dynamic);
+
+        auto lastChar                = RHS[RHS.size() - 1];
+        bool isMultilineContinuation = lastChar == '\\' || lastChar == '>';
+
+        if (isMultilineContinuation && impl->multiline.active && impl->multiline.delimiter != lastChar) {
+            result.setError("Multiline continuation character mismatch. Make sure you are not mixing \\ and >");
+
+            return result;
+        }
+
+        if (impl->multiline.buffer.size() > 0 && impl->multiline.delimiter == '>')
+            impl->multiline.buffer += " ";
+
+        impl->multiline.active = isMultilineContinuation;
+
+        if (isMultilineContinuation) {
+            impl->multiline.lhs       = LHS;
+            impl->multiline.delimiter = lastChar;
+            RHS.erase(RHS.size() - 1);
+            impl->multiline.buffer += RHS.substr(0, RHS.find_last_not_of(MULTILINE_SPACE_CHARSET) + 1);
+
+            return CParseResult{};
+        }
+
+        if (!impl->multiline.buffer.empty()) {
+            RHS = impl->multiline.buffer + RHS;
+            impl->multiline.buffer.clear();
+        }
 
         bool found = false;
         for (auto& h : impl->handlers) {

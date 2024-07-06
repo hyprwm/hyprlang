@@ -103,6 +103,14 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("myColors:green", (Hyprlang::INT)0);
         config.addConfigValue("myColors:random", (Hyprlang::INT)0);
         config.addConfigValue("customType", {Hyprlang::CConfigCustomValueType{&handleCustomValueSet, &handleCustomValueDestroy, "def"}});
+        config.addConfigValue("multilineSimple", (Hyprlang::STRING) "");
+        config.addConfigValue("multilineTrim", (Hyprlang::STRING) "");
+        config.addConfigValue("multilineVar", (Hyprlang::STRING) "");
+        config.addConfigValue("multilineTrim", (Hyprlang::STRING) "");
+        config.addConfigValue("multilineBreakWord", (Hyprlang::STRING) "");
+        config.addConfigValue("multilineMultiBreakWord", (Hyprlang::STRING) "");
+        config.addConfigValue("multilineCategory:indentedMultiline", (Hyprlang::STRING) "");
+        config.addConfigValue("multilineCategory:multilineUneven", (Hyprlang::STRING) "");
 
         config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
         config.registerHandler(&handleFlagsTest, "flags", {true});
@@ -149,6 +157,15 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), (Hyprlang::INT)0xFF000000);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), (Hyprlang::INT)0x22ffeeff);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringColon")), std::string{"ee:ee:ee"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multilineSimple")), std::string{"I use C++ because    I hate Java"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multilineTrim")), std::string{"I use Javascript because    I hate Python"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multilineVar")), std::string{"1 1  1   1"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multilineBreakWord")), std::string{"Hello multiline, how are you today?"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multilineMultiBreakWord")), std::string{"oui oui baguette"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multilineCategory:indentedMultiline")),
+               std::string{"Hello world this is another syntax for multiline that trims all spaces"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multilineCategory:multilineUneven")),
+               std::string{"Hello world this is another syntax for multiline that trims all spaces"});
 
         // test static values
         std::cout << " → Testing static values\n";
