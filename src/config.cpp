@@ -572,6 +572,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
         bool isMultilineContinuation = lastChar == '\\' || lastChar == '>';
 
         if (isMultilineContinuation && impl->multiline.active && impl->multiline.delimiter != lastChar) {
+            impl->multiline.active = false;
             result.setError("Multiline continuation character mismatch. Make sure you are not mixing \\ and >");
 
             return result;
