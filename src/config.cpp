@@ -565,15 +565,20 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
         bool found = false;
 
         for (auto& h : impl->handlers) {
-            if (!h.options.allowFlags) {
-                // we want to handle potentially nested keywords and ensure
-                // we only call the handler if they are scoped correctly.
+            // we want to handle potentially nested keywords and ensure
+            // we only call the handler if they are scoped correctly,
+            // unless the keyword is not scoped itself
+
+            const bool UNSCOPED    = !h.name.contains(":");
+            const auto HANDLERNAME = !h.name.empty() && h.name.at(0) == ':' ? h.name.substr(1) : h.name;
+
+            if (!h.options.allowFlags && !UNSCOPED) {
                 size_t colon = 0;
                 size_t idx   = 0;
                 size_t depth = 0;
 
-                while ((colon = h.name.find(":", idx)) != std::string::npos && impl->categories.size() > depth) {
-                    auto actual = h.name.substr(idx, colon - idx);
+                while ((colon = HANDLERNAME.find(":", idx)) != std::string::npos && impl->categories.size() > depth) {
+                    auto actual = HANDLERNAME.substr(idx, colon - idx);
 
                     if (actual != impl->categories[depth])
                         break;
@@ -582,11 +587,14 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                     ++depth;
                 }
 
-                if (depth != impl->categories.size() || h.name.substr(idx) != LHS)
+                if (depth != impl->categories.size() || HANDLERNAME.substr(idx) != LHS)
                     continue;
             }
 
-            if (h.options.allowFlags && (!LHS.starts_with(h.name) || LHS.contains(':') /* avoid cases where a category is called the same as a handler */))
+            if (UNSCOPED && HANDLERNAME != LHS && !h.options.allowFlags)
+                continue;
+
+            if (h.options.allowFlags && (!LHS.starts_with(HANDLERNAME) || LHS.contains(':') /* avoid cases where a category is called the same as a handler */))
                 continue;
 
             ret   = h.func(LHS.c_str(), RHS.c_str());

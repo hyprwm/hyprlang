@@ -23,10 +23,12 @@ namespace Colors {
     }
 
 // globals for testing
-bool                            barrelRoll  = false;
-std::string                     flagsFound  = "";
-Hyprlang::CConfig*              pConfig     = nullptr;
-std::string                     currentPath = "";
+bool                            barrelRoll    = false;
+std::string                     flagsFound    = "";
+Hyprlang::CConfig*              pConfig       = nullptr;
+std::string                     currentPath   = "";
+std::string                     ignoreKeyword = "";
+std::string                     useKeyword    = "";
 static std::vector<std::string> categoryKeywordActualValues;
 
 static Hyprlang::CParseResult   handleDoABarrelRoll(const char* COMMAND, const char* VALUE) {
@@ -48,6 +50,22 @@ static Hyprlang::CParseResult handleFlagsTest(const char* COMMAND, const char* V
 static Hyprlang::CParseResult handleCategoryKeyword(const char* COMMAND, const char* VALUE) {
     categoryKeywordActualValues.push_back(VALUE);
 
+    return Hyprlang::CParseResult();
+}
+
+static Hyprlang::CParseResult handleTestIgnoreKeyword(const char* COMMAND, const char* VALUE) {
+    ignoreKeyword = VALUE;
+
+    return Hyprlang::CParseResult();
+}
+
+static Hyprlang::CParseResult handleTestUseKeyword(const char* COMMAND, const char* VALUE) {
+    useKeyword = VALUE;
+
+    return Hyprlang::CParseResult();
+}
+
+static Hyprlang::CParseResult handleNoop(const char* COMMAND, const char* VALUE) {
     return Hyprlang::CParseResult();
 }
 
@@ -116,6 +134,9 @@ int main(int argc, char** argv, char** envp) {
         config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
         config.registerHandler(&handleFlagsTest, "flags", {true});
         config.registerHandler(&handleSource, "source", {false});
+        config.registerHandler(&handleTestIgnoreKeyword, "testIgnoreKeyword", {false});
+        config.registerHandler(&handleTestUseKeyword, ":testUseKeyword", {false});
+        config.registerHandler(&handleNoop, "testCategory:testUseKeyword", {false});
         config.registerHandler(&handleCategoryKeyword, "testCategory:categoryKeyword", {false});
 
         config.addSpecialCategory("special", {"key"});
@@ -161,6 +182,8 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringColon")), std::string{"ee:ee:ee"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("categoryKeyword")), std::string{"oops, this one shouldn't call the handler, not fun"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testCategory:nested1:categoryKeyword")), std::string{"this one should not either"});
+        EXPECT(ignoreKeyword, "aaa");
+        EXPECT(useKeyword, "yes");
 
         // test static values
         std::cout << " → Testing static values\n";
