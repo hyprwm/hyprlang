@@ -23,12 +23,13 @@ namespace Colors {
     }
 
 // globals for testing
-bool                          barrelRoll  = false;
-std::string                   flagsFound  = "";
-Hyprlang::CConfig*            pConfig     = nullptr;
-std::string                   currentPath = "";
+bool                            barrelRoll  = false;
+std::string                     flagsFound  = "";
+Hyprlang::CConfig*              pConfig     = nullptr;
+std::string                     currentPath = "";
+static std::vector<std::string> categoryKeywordActualValues;
 
-static Hyprlang::CParseResult handleDoABarrelRoll(const char* COMMAND, const char* VALUE) {
+static Hyprlang::CParseResult   handleDoABarrelRoll(const char* COMMAND, const char* VALUE) {
     if (std::string(VALUE) == "woohoo, some, params")
         barrelRoll = true;
 
@@ -42,6 +43,12 @@ static Hyprlang::CParseResult handleFlagsTest(const char* COMMAND, const char* V
 
     Hyprlang::CParseResult result;
     return result;
+}
+
+static Hyprlang::CParseResult handleCategoryKeyword(const char* COMMAND, const char* VALUE) {
+    categoryKeywordActualValues.push_back(VALUE);
+
+    return Hyprlang::CParseResult();
 }
 
 static Hyprlang::CParseResult handleSource(const char* COMMAND, const char* VALUE) {
@@ -88,12 +95,14 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testStringColon", "");
         config.addConfigValue("testEnv", "");
         config.addConfigValue("testVar", (Hyprlang::INT)0);
+        config.addConfigValue("categoryKeyword", (Hyprlang::STRING) "");
         config.addConfigValue("testStringQuotes", "");
         config.addConfigValue("testStringRecursive", "");
         config.addConfigValue("testCategory:testValueInt", (Hyprlang::INT)0);
         config.addConfigValue("testCategory:testValueHex", (Hyprlang::INT)0xA);
         config.addConfigValue("testCategory:nested1:testValueNest", (Hyprlang::INT)0);
         config.addConfigValue("testCategory:nested1:nested2:testValueNest", (Hyprlang::INT)0);
+        config.addConfigValue("testCategory:nested1:categoryKeyword", (Hyprlang::STRING) "");
         config.addConfigValue("testDefault", (Hyprlang::INT)123);
         config.addConfigValue("testCategory:testColor1", (Hyprlang::INT)0);
         config.addConfigValue("testCategory:testColor2", (Hyprlang::INT)0);
@@ -107,6 +116,7 @@ int main(int argc, char** argv, char** envp) {
         config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
         config.registerHandler(&handleFlagsTest, "flags", {true});
         config.registerHandler(&handleSource, "source", {false});
+        config.registerHandler(&handleCategoryKeyword, "testCategory:categoryKeyword", {false});
 
         config.addSpecialCategory("special", {"key"});
         config.addSpecialConfigValue("special", "value", (Hyprlang::INT)0);
@@ -149,6 +159,8 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor2")), (Hyprlang::INT)0xFF000000);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testCategory:testColor3")), (Hyprlang::INT)0x22ffeeff);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringColon")), std::string{"ee:ee:ee"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("categoryKeyword")), std::string{"oops, this one shouldn't call the handler, not fun"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testCategory:nested1:categoryKeyword")), std::string{"this one should not either"});
 
         // test static values
         std::cout << " → Testing static values\n";
@@ -161,6 +173,10 @@ int main(int argc, char** argv, char** envp) {
         std::cout << " → Testing handlers\n";
         EXPECT(barrelRoll, true);
         EXPECT(flagsFound, std::string{"abc"});
+
+        EXPECT(categoryKeywordActualValues.at(0), "we are having fun");
+        EXPECT(categoryKeywordActualValues.at(1), "so much fun");
+        EXPECT(categoryKeywordActualValues.at(2), "im the fun one at parties");
 
         // test dynamic
         std::cout << " → Testing dynamic\n";

@@ -563,9 +563,28 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             return parseVariable(LHS, RHS, dynamic);
 
         bool found = false;
+
         for (auto& h : impl->handlers) {
-            if (!h.options.allowFlags && h.name != LHS)
-                continue;
+            if (!h.options.allowFlags) {
+                // we want to handle potentially nested keywords and ensure
+                // we only call the handler if they are scoped correctly.
+                size_t colon = 0;
+                size_t idx   = 0;
+                size_t depth = 0;
+
+                while ((colon = h.name.find(":", idx)) != std::string::npos && impl->categories.size() > depth) {
+                    auto actual = h.name.substr(idx, colon - idx);
+
+                    if (actual != impl->categories[depth])
+                        break;
+
+                    idx = colon + 1;
+                    ++depth;
+                }
+
+                if (depth != impl->categories.size() || h.name.substr(idx) != LHS)
+                    continue;
+            }
 
             if (h.options.allowFlags && (!LHS.starts_with(h.name) || LHS.contains(':') /* avoid cases where a category is called the same as a handler */))
                 continue;
