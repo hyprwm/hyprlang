@@ -544,7 +544,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
                 if (RHSIT == std::string::npos && LHSIT == std::string::npos)
                     continue;
-                else
+                else if (!dynamic)
                     var.linesContainingVar.push_back({line, impl->categories, impl->currentSpecialCategory});
 
                 anyMatch = true;
