@@ -279,6 +279,17 @@ int main(int argc, char** argv, char** envp) {
         const auto ERRORSTR = std::string{ERRORS.getError()};
         EXPECT(std::count(ERRORSTR.begin(), ERRORSTR.end(), '\n'), 1);
 
+        std::cout << " → Testing error2.conf\n";
+        Hyprlang::CConfig errorConfig2("./config/error2.conf", {.throwAllErrors = true});
+        errorConfig2.addConfigValue("invalidHex", (Hyprlang::INT)0);
+        errorConfig2.addConfigValue("emptyHex", (Hyprlang::INT)0);
+
+        errorConfig2.commence();
+        const auto ERRORS2 = errorConfig2.parse();
+
+        EXPECT(ERRORS2.error, true);
+        const auto ERRORSTR2 = std::string{ERRORS2.getError()};
+        EXPECT(std::count(ERRORSTR2.begin(), ERRORSTR2.end(), '\n'), 1);
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
         return 1;
