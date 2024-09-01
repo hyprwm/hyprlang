@@ -168,8 +168,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
             auto   result = stoll(value, &position, 16);
             if (position == value.size())
                 return result;
-        } catch (const std::out_of_range&) { return std::unexpected("hex " + value + " is too big"); } catch (const std::exception&) {
-        }
+        } catch (const std::exception&) {}
         return std::unexpected("invalid hex " + value);
     };
     if (VALUE.starts_with("0x")) {
