@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
@@ -167,7 +168,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
             auto   result = stoll(value, &position, 16);
             if (position == value.size())
                 return result;
-        } catch (std::out_of_range) { return std::unexpected("hex " + value + " is too big"); } catch (...) {
+        } catch (const std::out_of_range&) { return std::unexpected("hex " + value + " is too big"); } catch (const std::exception&) {
         }
         return std::unexpected("invalid hex " + value);
     };
