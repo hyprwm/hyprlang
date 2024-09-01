@@ -279,17 +279,24 @@ int main(int argc, char** argv, char** envp) {
         const auto ERRORSTR = std::string{ERRORS.getError()};
         EXPECT(std::count(ERRORSTR.begin(), ERRORSTR.end(), '\n'), 1);
 
-        std::cout << " → Testing error2.conf\n";
-        Hyprlang::CConfig errorConfig2("./config/error2.conf", {.throwAllErrors = true});
-        errorConfig2.addConfigValue("invalidHex", (Hyprlang::INT)0);
-        errorConfig2.addConfigValue("emptyHex", (Hyprlang::INT)0);
+        std::cout << " → Testing invalid-numbers.conf\n";
+        Hyprlang::CConfig invalidNumbersConfig("./config/invalid-numbers.conf", {.throwAllErrors = true});
+        invalidNumbersConfig.addConfigValue("invalidHex", (Hyprlang::INT)0);
+        invalidNumbersConfig.addConfigValue("emptyHex", (Hyprlang::INT)0);
+        invalidNumbersConfig.addConfigValue("hugeHex", (Hyprlang::INT)0);
+        invalidNumbersConfig.addConfigValue("invalidInt", (Hyprlang::INT)0);
+        invalidNumbersConfig.addConfigValue("emptyInt", (Hyprlang::INT)0);
+        invalidNumbersConfig.addConfigValue("invalidColor", (Hyprlang::INT)0);
+        invalidNumbersConfig.addConfigValue("invalidFirstCharColor", (Hyprlang::INT)0);
+        invalidNumbersConfig.addConfigValue("invalidColorAlpha", (Hyprlang::INT)0);
+        invalidNumbersConfig.addConfigValue("invalidFirstCharColorAlpha", (Hyprlang::INT)0);
 
-        errorConfig2.commence();
-        const auto ERRORS2 = errorConfig2.parse();
+        invalidNumbersConfig.commence();
+        const auto ERRORS2 = invalidNumbersConfig.parse();
 
         EXPECT(ERRORS2.error, true);
         const auto ERRORSTR2 = std::string{ERRORS2.getError()};
-        EXPECT(std::count(ERRORSTR2.begin(), ERRORSTR2.end(), '\n'), 1);
+        EXPECT(std::count(ERRORSTR2.begin(), ERRORSTR2.end(), '\n'), 9 - 1);
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
         return 1;

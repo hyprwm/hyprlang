@@ -1,6 +1,8 @@
 #include "config.hpp"
+#include <exception>
 #include <filesystem>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 #include <format>
 #include <algorithm>
@@ -160,14 +162,18 @@ void CConfig::commence() {
 }
 
 static std::expected<int64_t, std::string> configStringToInt(const std::string& VALUE) {
+    auto parseHex = [](const std::string& value) -> std::expected<int64_t, std::string> {
+        try {
+            size_t position;
+            auto   result = stoll(value, &position, 16);
+            if (position == value.size())
+                return result;
+        } catch (const std::exception&) {}
+        return std::unexpected("invalid hex " + value);
+    };
     if (VALUE.starts_with("0x")) {
         // Values with 0x are hex
-        size_t position;
-        auto   result = stoll(VALUE, &position, 16);
-        if (position == VALUE.size())
-            return result;
-
-        return std::unexpected("invalid hex " + VALUE);
+        return parseHex(VALUE);
     } else if (VALUE.starts_with("rgba(") && VALUE.ends_with(')')) {
         const auto VALUEWITHOUTFUNC = trim(VALUE.substr(5, VALUE.length() - 6));
 
@@ -191,10 +197,13 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
 
             return a * (Hyprlang::INT)0x1000000 + r.value() * (Hyprlang::INT)0x10000 + g.value() * (Hyprlang::INT)0x100 + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 8) {
-            const auto RGBA = std::stoll(VALUEWITHOUTFUNC, nullptr, 16);
+            const auto RGBA = parseHex(VALUEWITHOUTFUNC);
+
+            if (!RGBA.has_value())
+                return RGBA;
 
             // now we need to RGBA -> ARGB. The config holds ARGB only.
-            return (RGBA >> 8) + 0x1000000 * (RGBA & 0xFF);
+            return (RGBA.value() >> 8) + 0x1000000 * (RGBA.value() & 0xFF);
         }
 
         return std::unexpected("rgba() expects length of 8 characters (4 bytes) or 4 comma separated values");
@@ -217,9 +226,12 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
 
             return (Hyprlang::INT)0xFF000000 + r.value() * (Hyprlang::INT)0x10000 + g.value() * (Hyprlang::INT)0x100 + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 6) {
-            const auto RGB = std::stoll(VALUEWITHOUTFUNC, nullptr, 16);
+            const auto RGB = parseHex(VALUEWITHOUTFUNC);
 
-            return RGB + 0xFF000000;
+            if (!RGB.has_value())
+                return RGB;
+
+            return RGB.value() + 0xFF000000;
         }
 
         return std::unexpected("rgb() expects length of 6 characters (3 bytes) or 3 comma separated values");
