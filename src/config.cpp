@@ -162,8 +162,12 @@ void CConfig::commence() {
 static std::expected<int64_t, std::string> configStringToInt(const std::string& VALUE) {
     if (VALUE.starts_with("0x")) {
         // Values with 0x are hex
-        const auto VALUEWITHOUTHEX = VALUE.substr(2);
-        return stoll(VALUEWITHOUTHEX, nullptr, 16);
+        size_t position;
+        auto   result = stoll(VALUE, &position, 16);
+        if (position == VALUE.size())
+            return result;
+
+        return std::unexpected("invalid hex " + VALUE);
     } else if (VALUE.starts_with("rgba(") && VALUE.ends_with(')')) {
         const auto VALUEWITHOUTFUNC = trim(VALUE.substr(5, VALUE.length() - 6));
 
