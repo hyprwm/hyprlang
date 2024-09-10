@@ -56,13 +56,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   message(STATUS "Using clang++ to compile hyprlang")
 endif()
 
+add_library(hypr::hyprlang ALIAS hyprlang)
 install(TARGETS hyprlang)
 
 # tests
 add_custom_target(tests)
 
 add_executable(hyprlang_test "tests/parse/main.cpp")
-target_link_libraries(hyprlang_test PRIVATE hyprlang hyprutils)
+target_link_libraries(hyprlang_test PRIVATE hypr::hyprlang)
 add_test(
   NAME "Parsing"
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
@@ -70,7 +71,7 @@ add_test(
 add_dependencies(tests hyprlang_test)
 
 add_executable(hyprlang_fuzz "tests/fuzz/main.cpp")
-target_link_libraries(hyprlang_fuzz PRIVATE hyprlang hyprutils)
+target_link_libraries(hyprlang_fuzz PRIVATE hypr::hyprlang)
 add_test(
   NAME "Fuzz"
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
