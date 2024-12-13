@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <memory>
 
 struct SHandler {
     std::string                  name = "";

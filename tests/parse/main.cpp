@@ -185,6 +185,16 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(ignoreKeyword, "aaa");
         EXPECT(useKeyword, "yes");
 
+        // Test templated wrapper
+        auto T1 = Hyprlang::CSimpleConfigValue<Hyprlang::INT>(&config, "testInt");
+        auto T2 = Hyprlang::CSimpleConfigValue<Hyprlang::FLOAT>(&config, "testFloat");
+        auto T3 = Hyprlang::CSimpleConfigValue<Hyprlang::SVector2D>(&config, "testVec");
+        auto T4 = Hyprlang::CSimpleConfigValue<std::string>(&config, "testString");
+        EXPECT(*T1, 123);
+        EXPECT(*T2, 123.456F);
+        EXPECT(*T3, EXP);
+        EXPECT(*T4, "Hello World! # This is not a comment!");
+
         // test static values
         std::cout << " → Testing static values\n";
         static auto* const PTESTINT = config.getConfigValuePtr("testInt")->getDataStaticPtr();

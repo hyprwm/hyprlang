@@ -13,3 +13,4 @@ _deps
 build/
 doxygen/
 doxygen-awesome-css/
+.cache/
