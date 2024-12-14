@@ -47,15 +47,6 @@ set_target_properties(
 
 target_link_libraries(hyprlang PkgConfig::deps)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # for std::expected. probably evil. Arch's clang is very outdated tho...
-  target_compile_options(hyprlang PUBLIC -std=gnu++2b -D__cpp_concepts=202002L
-                                         -Wno-macro-redefined)
-  add_compile_options(-stdlib=libc++)
-  add_link_options(-stdlib=libc++)
-  message(STATUS "Using clang++ to compile hyprlang")
-endif()
-
 add_library(hypr::hyprlang ALIAS hyprlang)
 install(TARGETS hyprlang)
 
