@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <memory>
 
 static const char* MULTILINE_SPACE_CHARSET = " \t";
 

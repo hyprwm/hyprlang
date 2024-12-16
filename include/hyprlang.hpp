@@ -3,11 +3,13 @@
 #ifndef HYPRLANG_HPP
 #define HYPRLANG_HPP
 
+#include <typeindex>
 #include <any>
-#include <memory>
 #include <string>
-#include <fstream>
+#include <ostream>
 #include <vector>
+#include <print>
+#include <cstdlib>
 #include <expected>
 
 class CConfigImpl;
@@ -459,6 +461,87 @@ namespace Hyprlang {
         void         retrieveKeysForCat(const char* category, const char*** out, size_t* len);
         CParseResult parseRawStream(const std::string& stream);
     };
+
+    /*!
+        Templated wrapper for Hyprlang values. Much more straightforward to use.
+
+        \since 0.6.0
+    */
+    template <typename T>
+    class CSimpleConfigValue {
+      public:
+        CSimpleConfigValue(CConfig* const pConfig, const char* val) {
+            const auto VAL = pConfig->getConfigValuePtr(val);
+
+            if (!VAL) {
+                std::println("CSimpleConfigValue: value not found");
+                abort();
+            }
+
+            // NOLINTNEXTLINE
+            p_ = VAL->getDataStaticPtr();
+
+#ifdef HYPRLAND_DEBUG
+            // verify type
+            const auto ANY  = VAL->getValue();
+            const auto TYPE = std::type_index(ANY.type());
+
+            // exceptions
+            const bool STRINGEX = (typeid(T) == typeid(std::string) && TYPE == typeid(Hyprlang::STRING));
+            const bool CUSTOMEX = (typeid(T) == typeid(Hyprlang::CUSTOMTYPE) && (TYPE == typeid(Hyprlang::CUSTOMTYPE*) || TYPE == typeid(void*) /* dunno why it does this? */));
+
+            if (typeid(T) != TYPE && !STRINGEX && !CUSTOMEX) {
+                std::println("CSimpleConfigValue: Mismatched type in CConfigValue<T>, got {} but has {}", typeid(T).name(), TYPE.name());
+                abort();
+            }
+#endif
+        }
+
+        T* ptr() const {
+            return *(T* const*)p_;
+        }
+
+        T operator*() const {
+            return *ptr();
+        }
+
+      private:
+        void* const* p_ = nullptr;
+    };
+
+    template <>
+    inline std::string* CSimpleConfigValue<std::string>::ptr() const {
+        std::print("Impossible to implement ptr() of CConfigValue<std::string>");
+        abort();
+        return nullptr;
+    }
+
+    template <>
+    inline std::string CSimpleConfigValue<std::string>::operator*() const {
+        return std::string{*(Hyprlang::STRING*)p_};
+    }
+
+    template <>
+    inline Hyprlang::STRING* CSimpleConfigValue<Hyprlang::STRING>::ptr() const {
+        return (Hyprlang::STRING*)p_;
+    }
+
+    template <>
+    inline Hyprlang::STRING CSimpleConfigValue<Hyprlang::STRING>::operator*() const {
+        return *(Hyprlang::STRING*)p_;
+    }
+
+    template <>
+    inline Hyprlang::CUSTOMTYPE* CSimpleConfigValue<Hyprlang::CUSTOMTYPE>::ptr() const {
+        return *(Hyprlang::CUSTOMTYPE* const*)p_;
+    }
+
+    template <>
+    inline Hyprlang::CUSTOMTYPE CSimpleConfigValue<Hyprlang::CUSTOMTYPE>::operator*() const {
+        std::print("Impossible to implement operator* of CConfigValue<Hyprlang::CUSTOMTYPE>, use ptr()");
+        abort();
+        return *ptr();
+    }
 };
 
 #ifndef HYPRLANG_INTERNAL
