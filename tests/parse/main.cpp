@@ -302,6 +302,17 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(ERRORS2.error, true);
         const auto ERRORSTR2 = std::string{ERRORS2.getError()};
         EXPECT(std::count(ERRORSTR2.begin(), ERRORSTR2.end(), '\n'), 9 - 1);
+
+        Hyprlang::CConfig multilineErrorConfig("./config/multiline-errors.conf", {.verifyOnly = true, .throwAllErrors = true});
+        multilineErrorConfig.commence();
+        const auto ERRORS3 = multilineErrorConfig.parse();
+        EXPECT(ERRORS3.error, true);
+        const auto ERRORSTR3 = std::string{ERRORS3.getError()};
+
+        // Error on line 12
+        EXPECT(ERRORSTR3.contains("12"), true);
+        // Backslash at end of file
+        EXPECT(ERRORSTR3.contains("backslash"), true);
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
         return 1;
