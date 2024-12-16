@@ -695,42 +695,29 @@ CParseResult CConfig::parse() {
 CParseResult CConfig::parseRawStream(const std::string& stream) {
     CParseResult      result;
 
-    std::string rawLine    = "";
-    int         rawLineNum = 0;
-    std::string line       = "";
-    int         lineNum    = 0;
+    int rawLineNum = 0;
+    int lineNum    = 0;
 
     std::stringstream str(stream);
 
-    while (std::getline(str, rawLine)) {
-        line = rawLine;
-        lineNum = ++rawLineNum;
+    while (true) {
+        const auto line = getNextLine(str, rawLineNum, lineNum);
 
-        bool mergeWithNextLine = rawLine.length() > 0 && rawLine.at(rawLine.length() - 1) == '\\';
-        bool gotWholeLine = true;
-
-        while (mergeWithNextLine) {
-            const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
-            line = line.substr(0, lastNonSpace + 1);
-
-            if (!std::getline(str, rawLine)) {
-                if (!impl->parseError.empty())
-                    impl->parseError += "\n";
-                impl->parseError += "Config error: Last line ends with backslash";
-                result.setError(impl->parseError);
-                gotWholeLine = false;
-                break;
+        if (!line) {
+            switch (line.error()) {
+                case GETNEXTLINEFAILURE_EOF:
+                    break;
+                case GETNEXTLINEFAILURE_BACKSLASH:
+                    if (!impl->parseError.empty())
+                        impl->parseError += "\n";
+                    impl->parseError += std::format("Config error: Last line ends with backslash");
+                    result.setError(impl->parseError);
+                    break;
             }
-
-            ++rawLineNum;
-            line += rawLine;
-            mergeWithNextLine = line.length() > 0 && line.at(line.length() - 1) == '\\';
+            break;
         }
 
-        if (!gotWholeLine)
-            break;
-
-        const auto RET = parseLine(line);
+        const auto RET = parseLine(line.value());
 
         if (RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
             if (!impl->parseError.empty())
@@ -738,9 +725,6 @@ CParseResult CConfig::parseRawStream(const std::string& stream) {
             impl->parseError += std::format("Config error at line {}: {}", lineNum, RET.errorStdString);
             result.setError(impl->parseError);
         }
-
-        lineNum = rawLineNum + 1;
-        line = "";
     }
 
     if (!impl->categories.empty()) {
@@ -766,40 +750,27 @@ CParseResult CConfig::parseFile(const char* file) {
         return result;
     }
 
-    std::string rawLine    = "";
-    int         rawLineNum = 0;
-    std::string line       = "";
-    int         lineNum    = 0;
+    int rawLineNum = 0;
+    int lineNum    = 0;
 
-    while (std::getline(iffile, rawLine)) {
-        line = rawLine;
-        lineNum = ++rawLineNum;
+    while (true) {
+        const auto line = getNextLine(iffile, rawLineNum, lineNum);
 
-        bool mergeWithNextLine = rawLine.length() > 0 && rawLine.at(rawLine.length() - 1) == '\\';
-        bool gotWholeLine = true;
-
-        while (mergeWithNextLine) {
-            const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
-            line = line.substr(0, lastNonSpace + 1);
-
-            if (!std::getline(iffile, rawLine)) {
-                if (!impl->parseError.empty())
-                    impl->parseError += "\n";
-                impl->parseError += std::format("Config error in file {}: Last line ends with backslash", file);
-                result.setError(impl->parseError);
-                gotWholeLine = false;
-                break;
+        if (!line) {
+            switch (line.error()) {
+                case GETNEXTLINEFAILURE_EOF:
+                    break;
+                case GETNEXTLINEFAILURE_BACKSLASH:
+                    if (!impl->parseError.empty())
+                        impl->parseError += "\n";
+                    impl->parseError += std::format("Config error in file {}: Last line ends with backslash", file);
+                    result.setError(impl->parseError);
+                    break;
             }
-
-            ++rawLineNum;
-            line += rawLine;
-            mergeWithNextLine = line.length() > 0 && line.at(line.length() - 1) == '\\';
+            break;
         }
 
-        if (!gotWholeLine)
-            break;
-
-        const auto RET = parseLine(line);
+        const auto RET = parseLine(line.value());
 
         if (!impl->currentFlags.noError && RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
             if (!impl->parseError.empty())
@@ -807,9 +778,6 @@ CParseResult CConfig::parseFile(const char* file) {
             impl->parseError += std::format("Config error in file {} at line {}: {}", file, lineNum, RET.errorStdString);
             result.setError(impl->parseError);
         }
-
-        lineNum = rawLineNum + 1;
-        line = "";
     }
 
     iffile.close();
@@ -826,6 +794,29 @@ CParseResult CConfig::parseFile(const char* file) {
     }
 
     return result;
+}
+
+std::expected<std::string, CConfig::eGetNextLineFailure> CConfig::getNextLine(std::istream& str, int &rawLineNum, int &lineNum) {
+    std::string line     = "";
+    std::string nextLine = "";
+
+    if (!std::getline(str, line))
+        return std::unexpected(GETNEXTLINEFAILURE_EOF);
+
+    lineNum = ++rawLineNum;
+
+    while (line.length() > 0 && line.at(line.length() - 1) == '\\') {
+        const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
+        line = line.substr(0, lastNonSpace + 1);
+
+        if (!std::getline(str, nextLine))
+            return std::unexpected(GETNEXTLINEFAILURE_BACKSLASH);
+
+        ++rawLineNum;
+        line += nextLine;
+    }
+
+    return line;
 }
 
 CParseResult CConfig::parseDynamic(const char* line) {
