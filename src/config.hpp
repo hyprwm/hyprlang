@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 
+static const char* MULTILINE_SPACE_CHARSET = " \t";
+
 struct SHandler {
     std::string                  name = "";
     Hyprlang::SHandlerOptions    options;
