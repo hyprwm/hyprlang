@@ -695,22 +695,52 @@ CParseResult CConfig::parse() {
 CParseResult CConfig::parseRawStream(const std::string& stream) {
     CParseResult      result;
 
-    std::string       line    = "";
-    int               linenum = 1;
+    std::string rawLine    = "";
+    int         rawLineNum = 0;
+    std::string line       = "";
+    int         lineNum    = 0;
 
     std::stringstream str(stream);
 
-    while (std::getline(str, line)) {
+    while (std::getline(str, rawLine)) {
+        line = rawLine;
+        lineNum = ++rawLineNum;
+
+        bool mergeWithNextLine = rawLine.length() > 0 && rawLine.at(rawLine.length() - 1) == '\\';
+        bool gotWholeLine = true;
+
+        while (mergeWithNextLine) {
+            const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
+            line = line.substr(0, lastNonSpace + 1);
+
+            if (!std::getline(str, rawLine)) {
+                if (!impl->parseError.empty())
+                    impl->parseError += "\n";
+                impl->parseError += "Config error: Last line ends with backslash";
+                result.setError(impl->parseError);
+                gotWholeLine = false;
+                break;
+            }
+
+            ++rawLineNum;
+            line += rawLine;
+            mergeWithNextLine = line.length() > 0 && line.at(line.length() - 1) == '\\';
+        }
+
+        if (!gotWholeLine)
+            break;
+
         const auto RET = parseLine(line);
 
         if (RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
             if (!impl->parseError.empty())
                 impl->parseError += "\n";
-            impl->parseError += std::format("Config error at line {}: {}", linenum, RET.errorStdString);
+            impl->parseError += std::format("Config error at line {}: {}", lineNum, RET.errorStdString);
             result.setError(impl->parseError);
         }
 
-        ++linenum;
+        lineNum = rawLineNum + 1;
+        line = "";
     }
 
     if (!impl->categories.empty()) {
@@ -736,21 +766,50 @@ CParseResult CConfig::parseFile(const char* file) {
         return result;
     }
 
-    std::string line    = "";
-    int         linenum = 1;
+    std::string rawLine    = "";
+    int         rawLineNum = 0;
+    std::string line       = "";
+    int         lineNum    = 0;
 
-    while (std::getline(iffile, line)) {
+    while (std::getline(iffile, rawLine)) {
+        line = rawLine;
+        lineNum = ++rawLineNum;
+
+        bool mergeWithNextLine = rawLine.length() > 0 && rawLine.at(rawLine.length() - 1) == '\\';
+        bool gotWholeLine = true;
+
+        while (mergeWithNextLine) {
+            const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
+            line = line.substr(0, lastNonSpace + 1);
+
+            if (!std::getline(iffile, rawLine)) {
+                if (!impl->parseError.empty())
+                    impl->parseError += "\n";
+                impl->parseError += std::format("Config error in file {}: Last line ends with backslash", file);
+                result.setError(impl->parseError);
+                gotWholeLine = false;
+                break;
+            }
+
+            ++rawLineNum;
+            line += rawLine;
+            mergeWithNextLine = line.length() > 0 && line.at(line.length() - 1) == '\\';
+        }
+
+        if (!gotWholeLine)
+            break;
 
         const auto RET = parseLine(line);
 
         if (!impl->currentFlags.noError && RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
             if (!impl->parseError.empty())
                 impl->parseError += "\n";
-            impl->parseError += std::format("Config error in file {} at line {}: {}", file, linenum, RET.errorStdString);
+            impl->parseError += std::format("Config error in file {} at line {}: {}", file, lineNum, RET.errorStdString);
             result.setError(impl->parseError);
         }
 
-        ++linenum;
+        lineNum = rawLineNum + 1;
+        line = "";
     }
 
     iffile.close();

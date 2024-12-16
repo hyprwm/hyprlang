@@ -145,6 +145,8 @@ int main(int argc, char** argv, char** envp) {
         config.addSpecialCategory("specialAnonymous", {nullptr, false, true});
         config.addSpecialConfigValue("specialAnonymous", "value", (Hyprlang::INT)0);
 
+        config.addConfigValue("multiline", "");
+
         config.commence();
 
         config.addSpecialCategory("specialGeneric:one", {nullptr, true});
@@ -268,6 +270,9 @@ int main(int argc, char** argv, char** envp) {
         // test custom type
         std::cout << " → Testing custom types\n";
         EXPECT(*reinterpret_cast<int64_t*>(std::any_cast<void*>(config.getConfigValue("customType"))), (Hyprlang::INT)1);
+
+        // test multiline config
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multiline")), std::string{"very        long            command"});
 
         std::cout << " → Testing error.conf\n";
         Hyprlang::CConfig errorConfig("./config/error.conf", {.verifyOnly = true, .throwAllErrors = true});
