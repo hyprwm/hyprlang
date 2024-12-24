@@ -25,6 +25,7 @@ extern "C" char** environ;
 
 // defines
 inline constexpr const char* ANONYMOUS_KEY = "__hyprlang_internal_anonymous_key";
+inline constexpr const char* MULTILINE_SPACE_CHARSET = " \t";
 //
 
 static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t maxSize) {

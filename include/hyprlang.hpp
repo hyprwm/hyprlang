@@ -51,7 +51,7 @@ namespace Hyprlang {
     typedef CConfigCustomValueType CUSTOMTYPE;
 
     /*!
-        A very simple vector type 
+        A very simple vector type
     */
     struct SVector2D {
         float x = 0, y = 0;
@@ -96,12 +96,12 @@ namespace Hyprlang {
         Generic struct for options for the config parser
     */
     struct SConfigOptions {
-        /*! 
+        /*!
             Don't throw errors on missing values.
         */
         int verifyOnly = false;
 
-        /*! 
+        /*!
             Return all errors instead of just the first
         */
         int throwAllErrors = false;
@@ -176,11 +176,11 @@ namespace Hyprlang {
     typedef void (*PCONFIGCUSTOMVALUEDESTRUCTOR)(void** data);
 
     /*!
-        Container for a custom config value type 
+        Container for a custom config value type
         When creating, pass your handler.
         Handler will receive a void** that points to a void* that you can set to your own
         thing. Pass a dtor to free whatever you allocated when the custom value type is being released.
-        data may always be pointing to a nullptr. 
+        data may always be pointing to a nullptr.
     */
     class CConfigCustomValueType {
       public:
@@ -272,7 +272,7 @@ namespace Hyprlang {
 
         /*!
             \since 0.3.0
-            
+
             a flag to notify whether this value has been set explicitly by the user,
             or not.
         */
@@ -306,7 +306,7 @@ namespace Hyprlang {
         ~CConfig();
 
         /*!
-            Add a config value, for example myCategory:myValue. 
+            Add a config value, for example myCategory:myValue.
             This has to be done before commence()
             Value provided becomes default.
         */
@@ -320,8 +320,8 @@ namespace Hyprlang {
 
         /*!
             \since 0.3.0
-            
-            Unregister a handler.        
+
+            Unregister a handler.
         */
         void unregisterHandler(const char* name);
 
@@ -363,14 +363,14 @@ namespace Hyprlang {
         CParseResult parse();
 
         /*!
-            Same as parse(), but parse a specific file, without any refreshing. 
+            Same as parse(), but parse a specific file, without any refreshing.
             recommended to use for stuff like source = path.conf
         */
         CParseResult parseFile(const char* file);
 
         /*!
-            Parse a single "line", dynamically. 
-            Values set by this are temporary and will be overwritten 
+            Parse a single "line", dynamically.
+            Values set by this are temporary and will be overwritten
             by default / config on the next parse()
         */
         CParseResult parseDynamic(const char* line);
@@ -378,14 +378,14 @@ namespace Hyprlang {
 
         /*!
             Get a config's value ptr. These are static.
-            nullptr on fail 
+            nullptr on fail
         */
         CConfigValue* getConfigValuePtr(const char* name);
 
         /*!
            Get a special category's config value ptr. These are only static for static (key-less)
            categories.
-           key can be nullptr for static categories. Cannot be nullptr for id-based categories. 
+           key can be nullptr for static categories. Cannot be nullptr for id-based categories.
            nullptr on fail.
         */
         CConfigValue* getSpecialConfigValuePtr(const char* category, const char* name, const char* key = nullptr);
@@ -447,8 +447,8 @@ namespace Hyprlang {
 
         CConfigImpl* impl;
 
-        enum eGetNextLineFailure {
-            GETNEXTLINEFAILURE_EOF,
+        enum eGetNextLineFailure : uint8_t {
+            GETNEXTLINEFAILURE_EOF = 0,
             GETNEXTLINEFAILURE_BACKSLASH,
         };
 
