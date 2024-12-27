@@ -37,6 +37,30 @@ static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t ma
     return 0;
 }
 
+static std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream& str, int &rawLineNum, int &lineNum) {
+    std::string line     = "";
+    std::string nextLine = "";
+
+    if (!std::getline(str, line))
+        return std::unexpected(GETNEXTLINEFAILURE_EOF);
+
+    lineNum = ++rawLineNum;
+
+    while (line.length() > 0 && line.at(line.length() - 1) == '\\') {
+        const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
+        line = line.substr(0, lastNonSpace + 1);
+
+        if (!std::getline(str, nextLine))
+            return std::unexpected(GETNEXTLINEFAILURE_BACKSLASH);
+
+        ++rawLineNum;
+        line += nextLine;
+    }
+
+    return line;
+}
+
+
 CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options_) {
     SConfigOptions options;
     std::memcpy(&options, &options_, seekABIStructSize(&options_, 16, sizeof(SConfigOptions)));
@@ -795,29 +819,6 @@ CParseResult CConfig::parseFile(const char* file) {
     }
 
     return result;
-}
-
-std::expected<std::string, CConfig::eGetNextLineFailure> CConfig::getNextLine(std::istream& str, int &rawLineNum, int &lineNum) {
-    std::string line     = "";
-    std::string nextLine = "";
-
-    if (!std::getline(str, line))
-        return std::unexpected(GETNEXTLINEFAILURE_EOF);
-
-    lineNum = ++rawLineNum;
-
-    while (line.length() > 0 && line.at(line.length() - 1) == '\\') {
-        const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
-        line = line.substr(0, lastNonSpace + 1);
-
-        if (!std::getline(str, nextLine))
-            return std::unexpected(GETNEXTLINEFAILURE_BACKSLASH);
-
-        ++rawLineNum;
-        line += nextLine;
-    }
-
-    return line;
 }
 
 CParseResult CConfig::parseDynamic(const char* line) {

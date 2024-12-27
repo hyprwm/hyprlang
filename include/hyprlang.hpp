@@ -10,7 +10,6 @@
 #include <vector>
 #include <print>
 #include <cstdlib>
-#include <expected>
 
 class CConfigImpl;
 struct SConfigDefaultValue;
@@ -447,12 +446,6 @@ namespace Hyprlang {
 
         CConfigImpl* impl;
 
-        enum eGetNextLineFailure : uint8_t {
-            GETNEXTLINEFAILURE_EOF = 0,
-            GETNEXTLINEFAILURE_BACKSLASH,
-        };
-
-        std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream& str, int &rawLineNum, int &lineNum);
         CParseResult parseLine(std::string line, bool dynamic = false);
         CParseResult configSetValueSafe(const std::string& command, const std::string& value);
         CParseResult parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic = false);
