@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <expected>
 
 struct SHandler {
     std::string                  name = "";
@@ -70,8 +69,6 @@ enum eGetNextLineFailure : uint8_t {
     GETNEXTLINEFAILURE_EOF = 0,
     GETNEXTLINEFAILURE_BACKSLASH,
 };
-
-static std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream& str, int &rawLineNum, int &lineNum);
 
 class CConfigImpl {
   public:
