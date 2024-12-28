@@ -25,6 +25,7 @@ extern "C" char** environ;
 
 // defines
 inline constexpr const char* ANONYMOUS_KEY = "__hyprlang_internal_anonymous_key";
+inline constexpr const char* MULTILINE_SPACE_CHARSET = " \t";
 //
 
 static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t maxSize) {
@@ -35,6 +36,30 @@ static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t ma
 
     return 0;
 }
+
+static std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream& str, int &rawLineNum, int &lineNum) {
+    std::string line     = "";
+    std::string nextLine = "";
+
+    if (!std::getline(str, line))
+        return std::unexpected(GETNEXTLINEFAILURE_EOF);
+
+    lineNum = ++rawLineNum;
+
+    while (line.length() > 0 && line.at(line.length() - 1) == '\\') {
+        const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
+        line = line.substr(0, lastNonSpace + 1);
+
+        if (!std::getline(str, nextLine))
+            return std::unexpected(GETNEXTLINEFAILURE_BACKSLASH);
+
+        ++rawLineNum;
+        line += nextLine;
+    }
+
+    return line;
+}
+
 
 CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options_) {
     SConfigOptions options;
@@ -695,22 +720,36 @@ CParseResult CConfig::parse() {
 CParseResult CConfig::parseRawStream(const std::string& stream) {
     CParseResult      result;
 
-    std::string       line    = "";
-    int               linenum = 1;
+    int rawLineNum = 0;
+    int lineNum    = 0;
 
     std::stringstream str(stream);
 
-    while (std::getline(str, line)) {
-        const auto RET = parseLine(line);
+    while (true) {
+        const auto line = getNextLine(str, rawLineNum, lineNum);
+
+        if (!line) {
+            switch (line.error()) {
+                case GETNEXTLINEFAILURE_EOF:
+                    break;
+                case GETNEXTLINEFAILURE_BACKSLASH:
+                    if (!impl->parseError.empty())
+                        impl->parseError += "\n";
+                    impl->parseError += std::format("Config error: Last line ends with backslash");
+                    result.setError(impl->parseError);
+                    break;
+            }
+            break;
+        }
+
+        const auto RET = parseLine(line.value());
 
         if (RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
             if (!impl->parseError.empty())
                 impl->parseError += "\n";
-            impl->parseError += std::format("Config error at line {}: {}", linenum, RET.errorStdString);
+            impl->parseError += std::format("Config error at line {}: {}", lineNum, RET.errorStdString);
             result.setError(impl->parseError);
         }
-
-        ++linenum;
     }
 
     if (!impl->categories.empty()) {
@@ -736,21 +775,34 @@ CParseResult CConfig::parseFile(const char* file) {
         return result;
     }
 
-    std::string line    = "";
-    int         linenum = 1;
+    int rawLineNum = 0;
+    int lineNum    = 0;
 
-    while (std::getline(iffile, line)) {
+    while (true) {
+        const auto line = getNextLine(iffile, rawLineNum, lineNum);
 
-        const auto RET = parseLine(line);
+        if (!line) {
+            switch (line.error()) {
+                case GETNEXTLINEFAILURE_EOF:
+                    break;
+                case GETNEXTLINEFAILURE_BACKSLASH:
+                    if (!impl->parseError.empty())
+                        impl->parseError += "\n";
+                    impl->parseError += std::format("Config error in file {}: Last line ends with backslash", file);
+                    result.setError(impl->parseError);
+                    break;
+            }
+            break;
+        }
+
+        const auto RET = parseLine(line.value());
 
         if (!impl->currentFlags.noError && RET.error && (impl->parseError.empty() || impl->configOptions.throwAllErrors)) {
             if (!impl->parseError.empty())
                 impl->parseError += "\n";
-            impl->parseError += std::format("Config error in file {} at line {}: {}", file, linenum, RET.errorStdString);
+            impl->parseError += std::format("Config error in file {} at line {}: {}", file, lineNum, RET.errorStdString);
             result.setError(impl->parseError);
         }
-
-        ++linenum;
     }
 
     iffile.close();

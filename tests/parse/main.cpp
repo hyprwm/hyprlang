@@ -145,6 +145,8 @@ int main(int argc, char** argv, char** envp) {
         config.addSpecialCategory("specialAnonymous", {nullptr, false, true});
         config.addSpecialConfigValue("specialAnonymous", "value", (Hyprlang::INT)0);
 
+        config.addConfigValue("multiline", "");
+
         config.commence();
 
         config.addSpecialCategory("specialGeneric:one", {nullptr, true});
@@ -279,6 +281,9 @@ int main(int argc, char** argv, char** envp) {
         std::cout << " → Testing custom types\n";
         EXPECT(*reinterpret_cast<int64_t*>(std::any_cast<void*>(config.getConfigValue("customType"))), (Hyprlang::INT)1);
 
+        // test multiline config
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("multiline")), std::string{"very        long            command"});
+
         std::cout << " → Testing error.conf\n";
         Hyprlang::CConfig errorConfig("./config/error.conf", {.verifyOnly = true, .throwAllErrors = true});
 
@@ -307,6 +312,17 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(ERRORS2.error, true);
         const auto ERRORSTR2 = std::string{ERRORS2.getError()};
         EXPECT(std::count(ERRORSTR2.begin(), ERRORSTR2.end(), '\n'), 9 - 1);
+
+        Hyprlang::CConfig multilineErrorConfig("./config/multiline-errors.conf", {.verifyOnly = true, .throwAllErrors = true});
+        multilineErrorConfig.commence();
+        const auto ERRORS3 = multilineErrorConfig.parse();
+        EXPECT(ERRORS3.error, true);
+        const auto ERRORSTR3 = std::string{ERRORS3.getError()};
+
+        // Error on line 12
+        EXPECT(ERRORSTR3.contains("12"), true);
+        // Backslash at end of file
+        EXPECT(ERRORSTR3.contains("backslash"), true);
     } catch (const char* e) {
         std::cout << Colors::RED << "Error: " << Colors::RESET << e << "\n";
         return 1;

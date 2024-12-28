@@ -65,6 +65,11 @@ struct SSpecialCategory {
     size_t anonymousID = 0;
 };
 
+enum eGetNextLineFailure : uint8_t {
+    GETNEXTLINEFAILURE_EOF = 0,
+    GETNEXTLINEFAILURE_BACKSLASH,
+};
+
 class CConfigImpl {
   public:
     std::string path         = "";
