@@ -11,7 +11,7 @@ std::string garbage() {
 
     std::string chars;
     for (int i = 0; i < len; ++i) {
-        chars += rand() % 254 + 1;
+        chars += std::to_string((rand() % 254) + 1);
     }
 
     return chars;

@@ -20,17 +20,18 @@ using namespace Hyprutils::String;
 #include <crt_externs.h>
 #define environ (*_NSGetEnviron())
 #else
+// NOLINTNEXTLINE
 extern "C" char** environ;
 #endif
 
 // defines
-inline constexpr const char* ANONYMOUS_KEY = "__hyprlang_internal_anonymous_key";
+inline constexpr const char* ANONYMOUS_KEY           = "__hyprlang_internal_anonymous_key";
 inline constexpr const char* MULTILINE_SPACE_CHARSET = " \t";
 //
 
 static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t maxSize) {
     for (size_t off = startOffset; off < maxSize; off += 4) {
-        if (*(int*)((unsigned char*)begin + off) == int{HYPRLANG_END_MAGIC})
+        if (*(int*)((unsigned char*)begin + off) == HYPRLANG_END_MAGIC)
             return off;
     }
 
@@ -48,7 +49,7 @@ static std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream&
 
     while (line.length() > 0 && line.at(line.length() - 1) == '\\') {
         const auto lastNonSpace = line.length() < 2 ? -1 : line.find_last_not_of(MULTILINE_SPACE_CHARSET, line.length() - 2);
-        line = line.substr(0, lastNonSpace + 1);
+        line                    = line.substr(0, lastNonSpace + 1);
 
         if (!std::getline(str, nextLine))
             return std::unexpected(GETNEXTLINEFAILURE_BACKSLASH);
@@ -60,12 +61,9 @@ static std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream&
     return line;
 }
 
-
-CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options_) {
+CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options_) : impl(new CConfigImpl) {
     SConfigOptions options;
     std::memcpy(&options, &options_, seekABIStructSize(&options_, 16, sizeof(SConfigOptions)));
-
-    impl = new CConfigImpl;
 
     if (options.pathIsStream)
         impl->rawConfigString = path;
@@ -85,7 +83,7 @@ CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options_) {
         impl->envVariables.push_back({VARIABLE, VALUE});
     }
 
-    std::sort(impl->envVariables.begin(), impl->envVariables.end(), [&](const auto& a, const auto& b) { return a.name.length() > b.name.length(); });
+    std::ranges::sort(impl->envVariables, [&](const auto& a, const auto& b) { return a.name.length() > b.name.length(); });
 
     impl->configOptions = options;
 }
@@ -99,40 +97,42 @@ void CConfig::addConfigValue(const char* name, const CConfigValue& value) {
         throw "Cannot addConfigValue after commence()";
 
     if ((eDataType)value.m_eType != CONFIGDATATYPE_CUSTOM && (eDataType)value.m_eType != CONFIGDATATYPE_STR)
-        impl->defaultValues.emplace(name, SConfigDefaultValue{value.getValue(), (eDataType)value.m_eType});
+        impl->defaultValues.emplace(name, SConfigDefaultValue{.data = value.getValue(), .type = (eDataType)value.m_eType});
     else if ((eDataType)value.m_eType == CONFIGDATATYPE_STR)
-        impl->defaultValues.emplace(name, SConfigDefaultValue{std::string{std::any_cast<const char*>(value.getValue())}, (eDataType)value.m_eType});
+        impl->defaultValues.emplace(name, SConfigDefaultValue{.data = std::string{std::any_cast<const char*>(value.getValue())}, .type = (eDataType)value.m_eType});
     else
         impl->defaultValues.emplace(name,
-                                    SConfigDefaultValue{reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->defaultVal, (eDataType)value.m_eType,
-                                                        reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->handler,
-                                                        reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
+                                    SConfigDefaultValue{.data    = reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->defaultVal,
+                                                        .type    = (eDataType)value.m_eType,
+                                                        .handler = reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->handler,
+                                                        .dtor    = reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
 }
 
 void CConfig::addSpecialConfigValue(const char* cat, const char* name, const CConfigValue& value) {
-    const auto IT = std::find_if(impl->specialCategoryDescriptors.begin(), impl->specialCategoryDescriptors.end(), [&](const auto& other) { return other->name == cat; });
+    const auto IT = std::ranges::find_if(impl->specialCategoryDescriptors, [&](const auto& other) { return other->name == cat; });
 
     if (IT == impl->specialCategoryDescriptors.end())
         throw "No such category";
 
     if ((eDataType)value.m_eType != CONFIGDATATYPE_CUSTOM && (eDataType)value.m_eType != CONFIGDATATYPE_STR)
-        IT->get()->defaultValues.emplace(name, SConfigDefaultValue{value.getValue(), (eDataType)value.m_eType});
+        IT->get()->defaultValues.emplace(name, SConfigDefaultValue{.data = value.getValue(), .type = (eDataType)value.m_eType});
     else if ((eDataType)value.m_eType == CONFIGDATATYPE_STR)
-        IT->get()->defaultValues.emplace(name, SConfigDefaultValue{std::string{std::any_cast<const char*>(value.getValue())}, (eDataType)value.m_eType});
+        IT->get()->defaultValues.emplace(name, SConfigDefaultValue{.data = std::string{std::any_cast<const char*>(value.getValue())}, .type = (eDataType)value.m_eType});
     else
         IT->get()->defaultValues.emplace(name,
-                                         SConfigDefaultValue{reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->defaultVal, (eDataType)value.m_eType,
-                                                             reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->handler,
-                                                             reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
+                                         SConfigDefaultValue{.data    = reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->defaultVal,
+                                                             .type    = (eDataType)value.m_eType,
+                                                             .handler = reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->handler,
+                                                             .dtor    = reinterpret_cast<CConfigCustomValueType*>(value.m_pData)->dtor});
 
-    const auto CAT = std::find_if(impl->specialCategories.begin(), impl->specialCategories.end(), [cat, name](const auto& other) { return other->name == cat && other->isStatic; });
+    const auto CAT = std::ranges::find_if(impl->specialCategories, [cat](const auto& other) { return other->name == cat && other->isStatic; });
 
     if (CAT != impl->specialCategories.end())
         CAT->get()->values[name].defaultFrom(IT->get()->defaultValues[name]);
 }
 
 void CConfig::removeSpecialConfigValue(const char* cat, const char* name) {
-    const auto IT = std::find_if(impl->specialCategoryDescriptors.begin(), impl->specialCategoryDescriptors.end(), [&](const auto& other) { return other->name == cat; });
+    const auto IT = std::ranges::find_if(impl->specialCategoryDescriptors, [&](const auto& other) { return other->name == cat; });
 
     if (IT == impl->specialCategoryDescriptors.end())
         throw "No such category";
@@ -163,9 +163,8 @@ void CConfig::addSpecialCategory(const char* name, SSpecialCategoryOptions optio
     }
 
     // sort longest to shortest
-    std::sort(impl->specialCategories.begin(), impl->specialCategories.end(), [](const auto& a, const auto& b) -> int { return a->name.length() > b->name.length(); });
-    std::sort(impl->specialCategoryDescriptors.begin(), impl->specialCategoryDescriptors.end(),
-              [](const auto& a, const auto& b) -> int { return a->name.length() > b->name.length(); });
+    std::ranges::sort(impl->specialCategories, [](const auto& a, const auto& b) -> int { return a->name.length() > b->name.length(); });
+    std::ranges::sort(impl->specialCategoryDescriptors, [](const auto& a, const auto& b) -> int { return a->name.length() > b->name.length(); });
 }
 
 void CConfig::removeSpecialCategory(const char* name) {
@@ -220,7 +219,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
             if (!r.has_value() || !g.has_value() || !b.has_value())
                 return std::unexpected("failed parsing " + VALUEWITHOUTFUNC);
 
-            return a * (Hyprlang::INT)0x1000000 + r.value() * (Hyprlang::INT)0x10000 + g.value() * (Hyprlang::INT)0x100 + b.value();
+            return (a * (Hyprlang::INT)0x1000000) + (r.value() * (Hyprlang::INT)0x10000) + (g.value() * (Hyprlang::INT)0x100) + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 8) {
             const auto RGBA = parseHex(VALUEWITHOUTFUNC);
 
@@ -228,7 +227,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
                 return RGBA;
 
             // now we need to RGBA -> ARGB. The config holds ARGB only.
-            return (RGBA.value() >> 8) + 0x1000000 * (RGBA.value() & 0xFF);
+            return (RGBA.value() >> 8) + (0x1000000 * (RGBA.value() & 0xFF));
         }
 
         return std::unexpected("rgba() expects length of 8 characters (4 bytes) or 4 comma separated values");
@@ -249,7 +248,7 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
             if (!r.has_value() || !g.has_value() || !b.has_value())
                 return std::unexpected("failed parsing " + VALUEWITHOUTFUNC);
 
-            return (Hyprlang::INT)0xFF000000 + r.value() * (Hyprlang::INT)0x10000 + g.value() * (Hyprlang::INT)0x100 + b.value();
+            return (Hyprlang::INT)0xFF000000 + (r.value() * (Hyprlang::INT)0x10000) + (g.value() * (Hyprlang::INT)0x100) + b.value();
         } else if (VALUEWITHOUTFUNC.length() == 6) {
             const auto RGB = parseHex(VALUEWITHOUTFUNC);
 
@@ -382,8 +381,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                     // find suitable key
                     size_t biggest = 0;
                     for (auto& catt : impl->specialCategories) {
-                        if (catt->anonymousID > biggest)
-                            biggest = catt->anonymousID;
+                        biggest = std::max(catt->anonymousID, biggest);
                     }
 
                     biggest++;
@@ -442,7 +440,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                 if (LHS.contains(" ") || RHS.contains(" "))
                     throw std::runtime_error("too many args");
 
-                VALUEIT->second.setFrom(SVector2D{std::stof(LHS), std::stof(RHS)});
+                VALUEIT->second.setFrom(SVector2D{.x = std::stof(LHS), .y = std::stof(RHS)});
             } catch (std::exception& e) {
                 result.setError(std::format("failed parsing a vec2: {}", e.what()));
                 return result;
@@ -476,14 +474,14 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 }
 
 CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic) {
-    auto IT = std::find_if(impl->variables.begin(), impl->variables.end(), [&](const auto& v) { return v.name == lhs.substr(1); });
+    auto IT = std::ranges::find_if(impl->variables, [&](const auto& v) { return v.name == lhs.substr(1); });
 
     if (IT != impl->variables.end())
         IT->value = rhs;
     else {
         impl->variables.push_back({lhs.substr(1), rhs});
-        std::sort(impl->variables.begin(), impl->variables.end(), [](const auto& lhs, const auto& rhs) { return lhs.name.length() > rhs.name.length(); });
-        IT = std::find_if(impl->variables.begin(), impl->variables.end(), [&](const auto& v) { return v.name == lhs.substr(1); });
+        std::ranges::sort(impl->variables, [](const auto& lhs, const auto& rhs) { return lhs.name.length() > rhs.name.length(); });
+        IT = std::ranges::find_if(impl->variables, [&](const auto& v) { return v.name == lhs.substr(1); });
     }
 
     if (dynamic) {
@@ -618,7 +616,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 size_t idx   = 0;
                 size_t depth = 0;
 
-                while ((colon = HANDLERNAME.find(":", idx)) != std::string::npos && impl->categories.size() > depth) {
+                while ((colon = HANDLERNAME.find(':', idx)) != std::string::npos && impl->categories.size() > depth) {
                     auto actual = HANDLERNAME.substr(idx, colon - idx);
 
                     if (actual != impl->categories[depth])
@@ -720,8 +718,8 @@ CParseResult CConfig::parse() {
 CParseResult CConfig::parseRawStream(const std::string& stream) {
     CParseResult      result;
 
-    int rawLineNum = 0;
-    int lineNum    = 0;
+    int               rawLineNum = 0;
+    int               lineNum    = 0;
 
     std::stringstream str(stream);
 
@@ -863,7 +861,7 @@ CConfigValue* CConfig::getSpecialConfigValuePtr(const char* category, const char
 void CConfig::registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options_) {
     SHandlerOptions options;
     std::memcpy(&options, &options_, seekABIStructSize(&options_, 0, sizeof(SHandlerOptions)));
-    impl->handlers.push_back(SHandler{name, options, func});
+    impl->handlers.push_back(SHandler{.name = name, .options = options, .func = func});
 }
 
 void CConfig::unregisterHandler(const char* name) {

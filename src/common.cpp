@@ -1,6 +1,6 @@
 #include "public.hpp"
 #include "config.hpp"
-#include <string.h>
+#include <cstring>
 
 using namespace Hyprlang;
 
@@ -30,38 +30,28 @@ CConfigValue::~CConfigValue() {
     }
 }
 
-CConfigValue::CConfigValue(const int64_t value) {
-    m_pData                              = new int64_t;
+CConfigValue::CConfigValue(const int64_t value) : m_eType(CONFIGDATATYPE_INT), m_pData(new int64_t) {
     *reinterpret_cast<int64_t*>(m_pData) = value;
-    m_eType                              = CONFIGDATATYPE_INT;
 }
 
-CConfigValue::CConfigValue(const float value) {
-    m_pData                            = new float;
+CConfigValue::CConfigValue(const float value) : m_eType(CONFIGDATATYPE_FLOAT), m_pData(new float) {
     *reinterpret_cast<float*>(m_pData) = value;
-    m_eType                            = CONFIGDATATYPE_FLOAT;
 }
 
-CConfigValue::CConfigValue(const SVector2D value) {
-    m_pData                                = new SVector2D;
+CConfigValue::CConfigValue(const SVector2D value) : m_eType(CONFIGDATATYPE_VEC2), m_pData(new SVector2D) {
     *reinterpret_cast<SVector2D*>(m_pData) = value;
-    m_eType                                = CONFIGDATATYPE_VEC2;
 }
 
-CConfigValue::CConfigValue(const char* value) {
-    m_pData = new char[strlen(value) + 1];
+CConfigValue::CConfigValue(const char* value) : m_eType(CONFIGDATATYPE_STR), m_pData(new char[strlen(value) + 1]) {
     strncpy((char*)m_pData, value, strlen(value));
     ((char*)m_pData)[strlen(value)] = '\0';
-    m_eType                         = CONFIGDATATYPE_STR;
 }
 
-CConfigValue::CConfigValue(CConfigCustomValueType&& value) {
-    m_pData = new CConfigCustomValueType(value);
-    m_eType = CONFIGDATATYPE_CUSTOM;
+CConfigValue::CConfigValue(CConfigCustomValueType&& value) : m_eType(CONFIGDATATYPE_CUSTOM), m_pData(new CConfigCustomValueType(value)) {
+    ;
 }
 
-CConfigValue::CConfigValue(const CConfigValue& other) {
-    m_eType = other.m_eType;
+CConfigValue::CConfigValue(const CConfigValue& other) : m_eType(other.m_eType) {
     setFrom(&other);
 }
 
@@ -77,11 +67,9 @@ void* const* CConfigValue::getDataStaticPtr() const {
     return &m_pData;
 }
 
-CConfigCustomValueType::CConfigCustomValueType(PCONFIGCUSTOMVALUEHANDLERFUNC handler_, PCONFIGCUSTOMVALUEDESTRUCTOR dtor_, const char* def) {
-    handler    = handler_;
-    dtor       = dtor_;
-    defaultVal = def;
-    lastVal    = def;
+CConfigCustomValueType::CConfigCustomValueType(PCONFIGCUSTOMVALUEHANDLERFUNC handler_, PCONFIGCUSTOMVALUEDESTRUCTOR dtor_, const char* def) :
+    handler(handler_), dtor(dtor_), defaultVal(def), lastVal(def) {
+    ;
 }
 
 CConfigCustomValueType::~CConfigCustomValueType() {
