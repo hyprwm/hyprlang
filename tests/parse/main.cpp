@@ -48,7 +48,7 @@ static Hyprlang::CParseResult handleFlagsTest(const char* COMMAND, const char* V
 }
 
 static Hyprlang::CParseResult handleCategoryKeyword(const char* COMMAND, const char* VALUE) {
-    categoryKeywordActualValues.push_back(VALUE);
+    categoryKeywordActualValues.emplace_back(VALUE);
 
     return Hyprlang::CParseResult();
 }
@@ -108,7 +108,7 @@ int main(int argc, char** argv, char** envp) {
         // setup config
         config.addConfigValue("testInt", (Hyprlang::INT)0);
         config.addConfigValue("testFloat", 0.F);
-        config.addConfigValue("testVec", Hyprlang::SVector2D{69, 420});
+        config.addConfigValue("testVec", Hyprlang::SVector2D{.x = 69, .y = 420});
         config.addConfigValue("testString", "");
         config.addConfigValue("testStringColon", "");
         config.addConfigValue("testEnv", "");
@@ -131,27 +131,27 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("myColors:random", (Hyprlang::INT)0);
         config.addConfigValue("customType", {Hyprlang::CConfigCustomValueType{&handleCustomValueSet, &handleCustomValueDestroy, "def"}});
 
-        config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {false});
-        config.registerHandler(&handleFlagsTest, "flags", {true});
-        config.registerHandler(&handleSource, "source", {false});
-        config.registerHandler(&handleTestIgnoreKeyword, "testIgnoreKeyword", {false});
-        config.registerHandler(&handleTestUseKeyword, ":testUseKeyword", {false});
-        config.registerHandler(&handleNoop, "testCategory:testUseKeyword", {false});
-        config.registerHandler(&handleCategoryKeyword, "testCategory:categoryKeyword", {false});
+        config.registerHandler(&handleDoABarrelRoll, "doABarrelRoll", {.allowFlags = false});
+        config.registerHandler(&handleFlagsTest, "flags", {.allowFlags = true});
+        config.registerHandler(&handleSource, "source", {.allowFlags = false});
+        config.registerHandler(&handleTestIgnoreKeyword, "testIgnoreKeyword", {.allowFlags = false});
+        config.registerHandler(&handleTestUseKeyword, ":testUseKeyword", {.allowFlags = false});
+        config.registerHandler(&handleNoop, "testCategory:testUseKeyword", {.allowFlags = false});
+        config.registerHandler(&handleCategoryKeyword, "testCategory:categoryKeyword", {.allowFlags = false});
 
-        config.addSpecialCategory("special", {"key"});
+        config.addSpecialCategory("special", {.key = "key"});
         config.addSpecialConfigValue("special", "value", (Hyprlang::INT)0);
 
-        config.addSpecialCategory("specialAnonymous", {nullptr, false, true});
+        config.addSpecialCategory("specialAnonymous", {.key = nullptr, .ignoreMissing = false, .anonymousKeyBased = true});
         config.addSpecialConfigValue("specialAnonymous", "value", (Hyprlang::INT)0);
 
         config.addConfigValue("multiline", "");
 
         config.commence();
 
-        config.addSpecialCategory("specialGeneric:one", {nullptr, true});
+        config.addSpecialCategory("specialGeneric:one", {.key = nullptr, .ignoreMissing = true});
         config.addSpecialConfigValue("specialGeneric:one", "value", (Hyprlang::INT)0);
-        config.addSpecialCategory("specialGeneric:two", {nullptr, true});
+        config.addSpecialCategory("specialGeneric:two", {.key = nullptr, .ignoreMissing = true});
         config.addSpecialConfigValue("specialGeneric:two", "value", (Hyprlang::INT)0);
 
         const Hyprlang::CConfigValue copyTest = {(Hyprlang::INT)1};
@@ -169,7 +169,7 @@ int main(int argc, char** argv, char** envp) {
         std::cout << " → Testing values\n";
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testInt")), 123);
         EXPECT(std::any_cast<float>(config.getConfigValue("testFloat")), 123.456f);
-        auto EXP = Hyprlang::SVector2D{69, 420};
+        auto EXP = Hyprlang::SVector2D{.x = 69, .y = 420};
         EXPECT(std::any_cast<Hyprlang::SVector2D>(config.getConfigValue("testVec")), EXP);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testString")), std::string{"Hello World! # This is not a comment!"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringQuotes")), std::string{"\"Hello World!\""});

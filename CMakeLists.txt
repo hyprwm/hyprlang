@@ -28,6 +28,13 @@ endif()
 add_compile_definitions(HYPRLANG_INTERNAL)
 
 set(CMAKE_CXX_STANDARD 23)
+add_compile_options(
+  -Wall
+  -Wextra
+  -Wpedantic
+  -Wno-unused-parameter
+  -Wno-missing-field-initializers)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(deps REQUIRED IMPORTED_TARGET hyprutils>=0.1.1)
