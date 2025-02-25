@@ -254,7 +254,7 @@ namespace Hyprlang {
         /*!
             Get the contained value as an std::any.
             For strings, this is a const char*.
-            For custom data types, this is a CConfigCustomValueType*.
+            For custom data types, this is a void* representing the data ptr stored by it.
         */
         std::any getValue() const {
             switch (m_eType) {
