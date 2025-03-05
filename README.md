@@ -54,4 +54,4 @@ Visit [hyprland.org/hyprlang](https://hyprland.org/hyprlang) to see the document
 
 ### Example implementation
 
-For an example implmentation, take a look at the `tests/` directory.
+For an example implementation, take a look at the `tests/` directory.
