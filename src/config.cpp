@@ -644,9 +644,9 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
             // parse expressions $(somevar + 2)
             // We only support single expressions for now
-            while (RHS.contains("$(")) {
-                const auto BEGIN_EXPR = RHS.find("$(");
-                const auto END_EXPR   = RHS.find(')', BEGIN_EXPR + 2);
+            while (RHS.contains("{{")) {
+                const auto BEGIN_EXPR = RHS.find("{{");
+                const auto END_EXPR   = RHS.find("}}", BEGIN_EXPR + 2);
                 if (END_EXPR != std::string::npos) {
                     // try to parse the expression
                     const auto RESULT = impl->parseExpression(RHS.substr(BEGIN_EXPR + 2, END_EXPR - BEGIN_EXPR - 2));
@@ -655,7 +655,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                         return result;
                     }
 
-                    RHS = RHS.substr(0, BEGIN_EXPR) + std::format("{}", RESULT.value()) + RHS.substr(END_EXPR + 1);
+                    RHS = RHS.substr(0, BEGIN_EXPR) + std::format("{}", RESULT.value()) + RHS.substr(END_EXPR + 2);
                 } else
                     break;
             }

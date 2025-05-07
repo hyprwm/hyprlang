@@ -249,7 +249,7 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringRecursive")), std::string{"dbc"});
 
         // test dynamic exprs
-        EXPECT(config.parseDynamic("testExpr = $(EXPR_VAR * 2)").error, false);
+        EXPECT(config.parseDynamic("testExpr = {{EXPR_VAR * 2}}").error, false);
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testExpr")), 1339L * 2);
 
         // test env variables
