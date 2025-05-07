@@ -12,6 +12,7 @@
 #include <cstring>
 #include <hyprutils/string/VarList.hpp>
 #include <hyprutils/string/String.hpp>
+#include <hyprutils/string/ConstVarList.hpp>
 
 using namespace Hyprlang;
 using namespace Hyprutils::String;
@@ -38,7 +39,7 @@ static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t ma
     return 0;
 }
 
-static std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream& str, int &rawLineNum, int &lineNum) {
+static std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream& str, int& rawLineNum, int& lineNum) {
     std::string line     = "";
     std::string nextLine = "";
 
@@ -510,6 +511,56 @@ void CConfigImpl::parseComment(const std::string& comment) {
         currentFlags.noError = args[2] == "true" || args[2] == "yes" || args[2] == "enable" || args[2] == "enabled" || args[2] == "set";
 }
 
+std::expected<float, std::string> CConfigImpl::parseExpression(const std::string& s) {
+    // for now, we only support very basic expressions.
+    // + - * / and only one per $()
+    // TODO: something better
+
+    if (s.empty())
+        return std::unexpected("Expression is empty");
+
+    CConstVarList args(s, 0, 's', true);
+
+    if (args[1] != "+" && args[1] != "-" && args[1] != "*" && args[1] != "/")
+        return std::unexpected("Invalid expression type: supported +, -, *, /");
+
+    auto  LHS_VAR = std::ranges::find_if(variables, [&](const auto& v) { return v.name == args[0]; });
+    auto  RHS_VAR = std::ranges::find_if(variables, [&](const auto& v) { return v.name == args[2]; });
+
+    float left  = 0;
+    float right = 0;
+
+    if (LHS_VAR != variables.end()) {
+        try {
+            left = std::stof(LHS_VAR->value);
+        } catch (...) { return std::unexpected("Failed to parse expression: value 1 holds a variable that does not look like a number"); }
+    } else {
+        try {
+            left = std::stof(std::string{args[0]});
+        } catch (...) { return std::unexpected("Failed to parse expression: value 1 does not look like a number or the variable doesn't exist"); }
+    }
+
+    if (RHS_VAR != variables.end()) {
+        try {
+            right = std::stof(RHS_VAR->value);
+        } catch (...) { return std::unexpected("Failed to parse expression: value 1 holds a variable that does not look like a number"); }
+    } else {
+        try {
+            right = std::stof(std::string{args[2]});
+        } catch (...) { return std::unexpected("Failed to parse expression: value 1 does not look like a number or the variable doesn't exist"); }
+    }
+
+    switch (args[1][0]) {
+        case '+': return left + right;
+        case '-': return left - right;
+        case '*': return left * right;
+        case '/': return left / right;
+        default: break;
+    }
+
+    return std::unexpected("Unknown error while parsing expression");
+}
+
 CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     CParseResult result;
 
@@ -571,6 +622,8 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
         // limit unwrapping iterations to 100. if exceeds, raise error
         for (size_t i = 0; i < 100; ++i) {
             bool anyMatch = false;
+
+            // parse variables
             for (auto& var : impl->variables) {
                 // don't parse LHS variables if this is a variable...
                 const auto LHSIT = ISVARIABLE ? std::string::npos : LHS.find("$" + var.name);
@@ -587,6 +640,24 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                     var.linesContainingVar.push_back({line, impl->categories, impl->currentSpecialCategory});
 
                 anyMatch = true;
+            }
+
+            // parse expressions $(somevar + 2)
+            // We only support single expressions for now
+            while (RHS.contains("$(")) {
+                const auto BEGIN_EXPR = RHS.find("$(");
+                const auto END_EXPR   = RHS.find(')', BEGIN_EXPR + 2);
+                if (END_EXPR != std::string::npos) {
+                    // try to parse the expression
+                    const auto RESULT = impl->parseExpression(RHS.substr(BEGIN_EXPR + 2, END_EXPR - BEGIN_EXPR - 2));
+                    if (!RESULT.has_value()) {
+                        result.setError(RESULT.error());
+                        return result;
+                    }
+
+                    RHS = RHS.substr(0, BEGIN_EXPR) + std::format("{}", RESULT.value()) + RHS.substr(END_EXPR + 1);
+                } else
+                    break;
             }
 
             if (!anyMatch)
@@ -728,8 +799,7 @@ CParseResult CConfig::parseRawStream(const std::string& stream) {
 
         if (!line) {
             switch (line.error()) {
-                case GETNEXTLINEFAILURE_EOF:
-                    break;
+                case GETNEXTLINEFAILURE_EOF: break;
                 case GETNEXTLINEFAILURE_BACKSLASH:
                     if (!impl->parseError.empty())
                         impl->parseError += "\n";
@@ -781,8 +851,7 @@ CParseResult CConfig::parseFile(const char* file) {
 
         if (!line) {
             switch (line.error()) {
-                case GETNEXTLINEFAILURE_EOF:
-                    break;
+                case GETNEXTLINEFAILURE_EOF: break;
                 case GETNEXTLINEFAILURE_BACKSLASH:
                     if (!impl->parseError.empty())
                         impl->parseError += "\n";

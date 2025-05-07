@@ -107,6 +107,7 @@ int main(int argc, char** argv, char** envp) {
 
         // setup config
         config.addConfigValue("testInt", (Hyprlang::INT)0);
+        config.addConfigValue("testExpr", (Hyprlang::INT)0);
         config.addConfigValue("testFloat", 0.F);
         config.addConfigValue("testVec", Hyprlang::SVector2D{.x = 69, .y = 420});
         config.addConfigValue("testString", "");
@@ -197,6 +198,10 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(*T3, EXP);
         EXPECT(*T4, "Hello World! # This is not a comment!");
 
+        // test expressions
+        std::cout << " → Testing expressions\n";
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testExpr")), 1335);
+
         // test static values
         std::cout << " → Testing static values\n";
         static auto* const PTESTINT = config.getConfigValuePtr("testInt")->getDataStaticPtr();
@@ -242,6 +247,10 @@ int main(int argc, char** argv, char** envp) {
 
         EXPECT(config.parseDynamic("$RECURSIVE1 = d").error, false);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringRecursive")), std::string{"dbc"});
+
+        // test dynamic exprs
+        EXPECT(config.parseDynamic("testExpr = $(EXPR_VAR * 2)").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getConfigValue("testExpr")), 1339L * 2);
 
         // test env variables
         std::cout << " → Testing env variables\n";

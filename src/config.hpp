@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <expected>
 
 struct SHandler {
     std::string                  name = "";
@@ -95,6 +96,7 @@ class CConfigImpl {
     Hyprlang::SConfigOptions                                 configOptions;
 
     void                                                     parseComment(const std::string& comment);
+    std::expected<float, std::string>                        parseExpression(const std::string& s);
 
     struct {
         bool noError = false;

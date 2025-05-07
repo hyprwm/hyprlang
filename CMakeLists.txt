@@ -37,7 +37,7 @@ add_compile_options(
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(deps REQUIRED IMPORTED_TARGET hyprutils>=0.1.1)
+pkg_check_modules(deps REQUIRED IMPORTED_TARGET hyprutils>=0.7.1)
 
 file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp" "include/hyprlang.hpp")
 
