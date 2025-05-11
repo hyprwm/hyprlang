@@ -645,7 +645,20 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             // parse expressions $(somevar + 2)
             // We only support single expressions for now
             while (RHS.contains("{{")) {
-                const auto BEGIN_EXPR = RHS.find("{{");
+                auto firstUnescaped = RHS.find("{{");
+                //keep searching until the escape char is not found.
+                while(RHS.at(firstUnescaped - 1) == '\\'){
+                    firstUnescaped = RHS.find("{{", firstUnescaped + 1);
+                    //escape if the next match is never found
+                    if(firstUnescaped == std::string::npos) 
+                        break;
+                }
+                //real match was never found.
+                if(firstUnescaped == std::string::npos){
+                    break;
+                } 
+                const auto BEGIN_EXPR = firstUnescaped;
+                // }} doesnt need escaping. it would be valid if escaped anyways.
                 const auto END_EXPR   = RHS.find("}}", BEGIN_EXPR + 2);
                 if (END_EXPR != std::string::npos) {
                     // try to parse the expression
@@ -666,6 +679,15 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             if (i == 99) {
                 result.setError("Expanding variables exceeded max iteration limit");
                 return result;
+            }
+        }
+
+        // Removing escape chars. -- in the future, maybe map all the chars that can be escaped.
+        // Right now only expression parsing has escapeable chars
+        for(long i = 0; i < (long)RHS.length()-(long)1; i++){
+            if(RHS.at(i) == '\\' && (RHS.at(i+1) == '{' || RHS.at(i+1) == '}')){
+                RHS.erase(i--, 1);
+                continue;
             }
         }
 
