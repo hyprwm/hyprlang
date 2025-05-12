@@ -647,16 +647,15 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             while (RHS.contains("{{")) {
                 auto firstUnescaped = RHS.find("{{");
                 //keep searching until the escape char is not found.
-                while(RHS.at(firstUnescaped - 1) == '\\'){
+                while(firstUnescaped != 0 && RHS.at(firstUnescaped - 1) == '\\'){
                     firstUnescaped = RHS.find("{{", firstUnescaped + 1);
                     //break if the next match is never found
                     if(firstUnescaped == std::string::npos) 
                         break;
                 }
                 //real match was never found.
-                if(firstUnescaped == std::string::npos){
+                if(firstUnescaped == std::string::npos)
                     break;
-                } 
                 const auto BEGIN_EXPR = firstUnescaped;
                 // }} doesnt need escaping. Would be invalid expression anyways.
                 const auto END_EXPR   = RHS.find("}}", BEGIN_EXPR + 2);
