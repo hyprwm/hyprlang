@@ -216,7 +216,7 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testEscapedExpr2")), std::string{"{{testInt + 7}}"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testEscapedExpr3")), std::string{"{{3 + 8}}"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testEscapedEscape")), std::string{"\\5"});
-        EXPECT(std::any_cast<const char*>(config.getConfigValue("testMixedEscapedExpression")), std::string{"2 {{ {{50+50}} / {{10 * 5}} }}"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testMixedEscapedExpression")), std::string{"-2 {{ {{50 + 50}} / {{10 * 5}} }}"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testMixedEscapedExpression2")), std::string{"{{8\\13}} should equal \"{{8\\13}}\""});
 
 
