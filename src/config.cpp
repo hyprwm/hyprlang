@@ -662,7 +662,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                     // Continue searching for next valid expression start.
                     firstUnescaped = RHS.find("{{", firstUnescaped + 1);
                     // Break if the next match is never found
-                    if (firstUnescaped == std::string::npos) 
+                    if (firstUnescaped == std::string::npos)
                         break;
                 }
                 // Real match was never found.
@@ -670,7 +670,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                     break;
                 const auto BEGIN_EXPR = firstUnescaped;
                 // "}}" doesnt need escaping. Would be invalid expression anyways.
-                const auto END_EXPR   = RHS.find("}}", BEGIN_EXPR + 2);
+                const auto END_EXPR = RHS.find("}}", BEGIN_EXPR + 2);
                 if (END_EXPR != std::string::npos) {
                     // try to parse the expression
                     const auto RESULT = impl->parseExpression(RHS.substr(BEGIN_EXPR + 2, END_EXPR - BEGIN_EXPR - 2));
@@ -693,26 +693,25 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             }
         }
 
-
         if (ISVARIABLE)
             return parseVariable(LHS, RHS, dynamic);
 
         // Removing escape chars. -- in the future, maybe map all the chars that can be escaped.
         // Right now only expression parsing has escapeable chars
         const char ESCAPE_CHAR = '\\';
-        const char ESCAPE_SET[]{'{','}'};
+        const char ESCAPE_SET[]{'{', '}'};
         for (long i = 0; i < (long)RHS.length() - (long)1; i++) {
             if (RHS.at(i) != ESCAPE_CHAR)
                 continue;
             //if escaping an escape, remove and skip the next char
             if (RHS.at(i + 1) == ESCAPE_CHAR) {
-                RHS.erase(i,1);
+                RHS.erase(i, 1);
                 continue;
             }
             //checks if any of the chars were escapable.
             for (unsigned int j = 0; j < sizeof(ESCAPE_SET) / sizeof(char); j++) {
-                if (RHS.at(i+1) == ESCAPE_SET[j]) {
-                    RHS.erase(i--,1);
+                if (RHS.at(i + 1) == ESCAPE_SET[j]) {
+                    RHS.erase(i--, 1);
                     break;
                 }
             }

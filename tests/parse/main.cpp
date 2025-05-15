@@ -219,10 +219,8 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testMixedEscapedExpression")), std::string{"-2 {{ {{50 + 50}} / {{10 * 5}} }}"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testMixedEscapedExpression2")), std::string{"{{8\\13}} should equal \"{{8\\13}}\""});
 
-
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testImbeddedEscapedExpression")), std::string{"{{10 + 10}}"});
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testDynamicEscapedExpression")), std::string{"{{ moved: 500 expr: {{1000 / 2}} }}"});
-
 
         // test static values
         std::cout << " → Testing static values\n";
