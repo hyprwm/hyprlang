@@ -2,6 +2,7 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <format>
@@ -644,10 +645,22 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
             // parse expressions {{somevar + 2}}
             // We only support single expressions for now
+            //auto ESCAPE_SKIP = std::basic_string("\\");
             while (RHS.contains("{{")) {
                 auto firstUnescaped = RHS.find("{{");
-                //keep searching until the escape char is not found.
-                while(firstUnescaped != 0 && RHS.at(firstUnescaped - 1) == '\\'){
+                //keep searching until non escaped expression start is found
+                while(firstUnescaped > 0){
+                    //special check to avoid undefined behaviour with std::basic_string::find_last_not_of
+                    auto amountSkipped = 0;
+                    for(int i = firstUnescaped - 1; i >= 0; i--){
+                        if(RHS.at(i) != '\\')
+                            break;
+                        amountSkipped++;
+                    }
+                    // no escape chars, or even escape chars. means they escaped themselves.
+                    if (amountSkipped % 2 == 0)
+                        break;
+                    // continue searching for next valid expression start.
                     firstUnescaped = RHS.find("{{", firstUnescaped + 1);
                     //break if the next match is never found
                     if(firstUnescaped == std::string::npos) 
@@ -681,17 +694,30 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
             }
         }
 
-        // Removing escape chars. -- in the future, maybe map all the chars that can be escaped.
-        // Right now only expression parsing has escapeable chars
-        for(long i = 0; i < (long)RHS.length()-(long)1; i++){
-            if(RHS.at(i) == '\\' && (RHS.at(i+1) == '{' || RHS.at(i+1) == '}')){
-                RHS.erase(i--, 1);
-                continue;
-            }
-        }
 
         if (ISVARIABLE)
             return parseVariable(LHS, RHS, dynamic);
+
+        // Removing escape chars. -- in the future, maybe map all the chars that can be escaped.
+        // Right now only expression parsing has escapeable chars
+        const char ESCAPE_CHAR = '\\';
+        const char ESCAPE_SET[]{'{','}'};
+        for (long i = 0; i < (long)RHS.length() - (long)1; i++){
+            if (RHS.at(i) != ESCAPE_CHAR)
+                continue;
+            //if escaping an escape, remove and skip the next char
+            if (RHS.at(i + 1) == ESCAPE_CHAR){
+                RHS.erase(i,1);
+                continue;
+            }
+            //checks if any of the chars were escapable.
+            for(unsigned int j = 0; j < sizeof(ESCAPE_SET) / sizeof(char); j++){
+                if(RHS.at(i+1) == ESCAPE_SET[j]){
+                    RHS.erase(i--,1);
+                    break;
+                }
+            }
+        }
 
         bool found = false;
 
