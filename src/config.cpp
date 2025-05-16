@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include <array>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -698,8 +699,8 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
         // Removing escape chars. -- in the future, maybe map all the chars that can be escaped.
         // Right now only expression parsing has escapeable chars
-        const char ESCAPE_CHAR = '\\';
-        const char ESCAPE_SET[]{'{', '}'};
+        const char                ESCAPE_CHAR = '\\';
+        const std::array<char, 2> ESCAPE_SET{'{', '}'};
         for (long i = 0; i < (long)RHS.length() - (long)1; i++) {
             if (RHS.at(i) != ESCAPE_CHAR)
                 continue;
@@ -709,7 +710,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 continue;
             }
             //checks if any of the chars were escapable.
-            for (unsigned int j = 0; j < sizeof(ESCAPE_SET) / sizeof(char); j++) {
+            for (unsigned int j = 0; j < ESCAPE_SET.size(); j++) {
                 if (RHS.at(i + 1) == ESCAPE_SET[j]) {
                     RHS.erase(i--, 1);
                     break;
