@@ -710,8 +710,8 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 continue;
             }
             //checks if any of the chars were escapable.
-            for (size_t j = 0; j < ESCAPE_SET.size(); j++) {
-                if (RHS.at(i + 1) != ESCAPE_SET[j])
+            for (const auto& ESCAPABLE_CHAR : ESCAPE_SET) {
+                if (RHS.at(i + 1) != ESCAPABLE_CHAR)
                     continue;
                 RHS.erase(i--, 1);
                 break;
