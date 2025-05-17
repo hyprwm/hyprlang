@@ -108,6 +108,14 @@ int main(int argc, char** argv, char** envp) {
         // setup config
         config.addConfigValue("testInt", (Hyprlang::INT)0);
         config.addConfigValue("testExpr", (Hyprlang::INT)0);
+        config.addConfigValue("testEscapedExpr", "");
+        config.addConfigValue("testEscapedExpr2", "");
+        config.addConfigValue("testEscapedExpr3", "");
+        config.addConfigValue("testEscapedEscape", "");
+        config.addConfigValue("testMixedEscapedExpression", "");
+        config.addConfigValue("testMixedEscapedExpression2", "");
+        config.addConfigValue("testImbeddedEscapedExpression", "");
+        config.addConfigValue("testDynamicEscapedExpression", "");
         config.addConfigValue("testFloat", 0.F);
         config.addConfigValue("testVec", Hyprlang::SVector2D{.x = 69, .y = 420});
         config.addConfigValue("testString", "");
@@ -202,6 +210,18 @@ int main(int argc, char** argv, char** envp) {
         std::cout << " → Testing expressions\n";
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("testExpr")), 1335);
 
+        // test expression escape
+        std::cout << " → Testing expression escapes\n";
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEscapedExpr")), std::string{"{{testInt + 7}}"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEscapedExpr2")), std::string{"{{testInt + 7}}"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEscapedExpr3")), std::string{"{{3 + 8}}"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEscapedEscape")), std::string{"\\5"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testMixedEscapedExpression")), std::string{"-2 {{ {{50 + 50}} / {{10 * 5}} }}"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testMixedEscapedExpression2")), std::string{"{{8\\13}} should equal \"{{8\\13}}\""});
+
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testImbeddedEscapedExpression")), std::string{"{{10 + 10}}"});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testDynamicEscapedExpression")), std::string{"{{ moved: 500 expr: {{1000 / 2}} }}"});
+
         // test static values
         std::cout << " → Testing static values\n";
         static auto* const PTESTINT = config.getConfigValuePtr("testInt")->getDataStaticPtr();
@@ -247,6 +267,10 @@ int main(int argc, char** argv, char** envp) {
 
         EXPECT(config.parseDynamic("$RECURSIVE1 = d").error, false);
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testStringRecursive")), std::string{"dbc"});
+
+        // test expression escape with dynamic vars
+        EXPECT(config.parseDynamic("$MOVING_VAR = 500").error, false);
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testDynamicEscapedExpression")), std::string{"{{ moved: 250 expr: {{500 / 2}} }}"});
 
         // test dynamic exprs
         EXPECT(config.parseDynamic("testExpr = {{EXPR_VAR * 2}}").error, false);
