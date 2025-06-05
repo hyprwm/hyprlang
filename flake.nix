@@ -39,7 +39,7 @@
         inputs.hyprutils.overlays.default
         (final: prev: {
           hyprlang = final.callPackage ./nix/default.nix {
-            stdenv = final.gcc14Stdenv;
+            stdenv = final.gcc15Stdenv;
             version = version + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
           };
           hyprlang-with-tests = final.hyprlang.override {doCheck = true;};
