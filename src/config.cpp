@@ -535,11 +535,6 @@ std::optional<std::string> CConfigImpl::parseComment(const std::string& comment)
             break;
         }
 
-        if (args[i] == "!") {
-            negated = true;
-            continue;
-        }
-
         if (args[i] == "endif") {
             if (!currentFlags.inAnIfBlock)
                 return "stray endif";
@@ -557,12 +552,17 @@ std::optional<std::string> CConfigImpl::parseComment(const std::string& comment)
         if (currentFlags.inAnIfBlock)
             return "nested if statements are not allowed";
 
+        if (ifBlockVariable.starts_with("!")) {
+            negated = true;
+            ifBlockVariable = ifBlockVariable.substr(1);
+        }
+
         currentFlags.inAnIfBlock = true;
 
         if (const auto VAR = getVariable(ifBlockVariable); VAR)
-            currentFlags.ifBlockFailed = !VAR->truthy();
+            currentFlags.ifBlockFailed = negated ? VAR->truthy() : !VAR->truthy();
         else
-            currentFlags.ifBlockFailed = true;
+            currentFlags.ifBlockFailed = !negated;
     }
 
     return std::nullopt;
