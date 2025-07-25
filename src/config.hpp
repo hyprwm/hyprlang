@@ -23,6 +23,10 @@ struct SVariable {
     };
 
     std::vector<SVarLine> linesContainingVar; // for dynamic updates
+
+    bool                  truthy() {
+        return value.length() > 0;
+    }
 };
 
 // remember to also edit CConfigValue if editing
@@ -95,10 +99,13 @@ class CConfigImpl {
 
     Hyprlang::SConfigOptions                                 configOptions;
 
-    void                                                     parseComment(const std::string& comment);
+    std::optional<std::string>                               parseComment(const std::string& comment);
     std::expected<float, std::string>                        parseExpression(const std::string& s);
+    SVariable*                                               getVariable(const std::string& name);
 
     struct {
-        bool noError = false;
+        bool noError       = false;
+        bool inAnIfBlock   = false;
+        bool ifBlockFailed = false;
     } currentFlags;
 };

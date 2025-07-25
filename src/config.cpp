@@ -501,16 +501,71 @@ CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& r
     return result;
 }
 
-void CConfigImpl::parseComment(const std::string& comment) {
+SVariable* CConfigImpl::getVariable(const std::string& name) {
+    for (auto& v : envVariables) {
+        if (v.name == name)
+            return &v;
+    }
+
+    for (auto& v : variables) {
+        if (v.name == name)
+            return &v;
+    }
+
+    return nullptr;
+}
+
+std::optional<std::string> CConfigImpl::parseComment(const std::string& comment) {
     const auto COMMENT = trim(comment);
 
     if (!COMMENT.starts_with("hyprlang"))
-        return;
+        return std::nullopt;
 
-    CVarList args(COMMENT, 0, 's', true);
+    CConstVarList args(COMMENT, 0, 's', true);
 
-    if (args[1] == "noerror")
-        currentFlags.noError = args[2] == "true" || args[2] == "yes" || args[2] == "enable" || args[2] == "enabled" || args[2] == "set";
+    bool          negated         = false;
+    std::string   ifBlockVariable = "";
+
+    for (size_t i = 1; i < args.size(); ++i) {
+        if (args[i] == "noerror") {
+            if (negated)
+                currentFlags.noError = false;
+            else
+                currentFlags.noError = args[2] == "true" || args[2] == "yes" || args[2] == "enable" || args[2] == "enabled" || args[2] == "set" || args[2].empty();
+            break;
+        }
+
+        if (args[i] == "!") {
+            negated = true;
+            continue;
+        }
+
+        if (args[i] == "endif") {
+            if (!currentFlags.inAnIfBlock)
+                return "stray endif";
+            currentFlags.inAnIfBlock = false;
+            break;
+        }
+
+        if (args[i] == "if") {
+            ifBlockVariable = args[++i];
+            break;
+        }
+    }
+
+    if (!ifBlockVariable.empty()) {
+        if (currentFlags.inAnIfBlock)
+            return "nested if statements are not allowed";
+
+        currentFlags.inAnIfBlock = true;
+
+        if (const auto VAR = getVariable(ifBlockVariable); VAR)
+            currentFlags.ifBlockFailed = !VAR->truthy();
+        else
+            currentFlags.ifBlockFailed = true;
+    }
+
+    return std::nullopt;
 }
 
 std::expected<float, std::string> CConfigImpl::parseExpression(const std::string& s) {
@@ -571,9 +626,14 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
     auto commentPos = line.find('#');
 
     if (commentPos == 0) {
-        impl->parseComment(line.substr(1));
+        const auto COMMENT_RESULT = impl->parseComment(line.substr(1));
+        if (COMMENT_RESULT.has_value())
+            result.setError(*COMMENT_RESULT);
         return result;
     }
+
+    if (impl->currentFlags.inAnIfBlock && impl->currentFlags.ifBlockFailed)
+        return result;
 
     size_t lastHashPos = 0;
 
