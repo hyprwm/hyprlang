@@ -50,7 +50,7 @@ add_baker = Koichi, 18, Morioh
 
 ## Docs
 
-Visit [hyprland.org/hyprlang](https://hyprland.org/hyprlang) to see the documentation.
+Visit [wiki.hypr.land/Hypr-Ecosystem/hyprlang/](https://wiki.hypr.land/Hypr-Ecosystem/hyprlang/) to see the documentation.
 
 ### Example implementation
 
