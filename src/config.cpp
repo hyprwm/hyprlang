@@ -536,9 +536,9 @@ std::optional<std::string> CConfigImpl::parseComment(const std::string& comment)
         }
 
         if (args[i] == "endif") {
-            if (!currentFlags.inAnIfBlock)
+            if (currentFlags.ifDatas.empty())
                 return "stray endif";
-            currentFlags.inAnIfBlock = false;
+            currentFlags.ifDatas.pop_back();
             break;
         }
 
@@ -549,20 +549,19 @@ std::optional<std::string> CConfigImpl::parseComment(const std::string& comment)
     }
 
     if (!ifBlockVariable.empty()) {
-        if (currentFlags.inAnIfBlock)
-            return "nested if statements are not allowed";
-
         if (ifBlockVariable.starts_with("!")) {
             negated = true;
             ifBlockVariable = ifBlockVariable.substr(1);
         }
 
-        currentFlags.inAnIfBlock = true;
+        CConfigImpl::SIfBlockData newIfData;
 
         if (const auto VAR = getVariable(ifBlockVariable); VAR)
-            currentFlags.ifBlockFailed = negated ? VAR->truthy() : !VAR->truthy();
+            newIfData.failed = negated ? VAR->truthy() : !VAR->truthy();
         else
-            currentFlags.ifBlockFailed = !negated;
+            newIfData.failed = !negated;
+
+        currentFlags.ifDatas.emplace_back(newIfData);
     }
 
     return std::nullopt;
@@ -632,7 +631,7 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
         return result;
     }
 
-    if (impl->currentFlags.inAnIfBlock && impl->currentFlags.ifBlockFailed)
+    if (!impl->currentFlags.ifDatas.empty() && impl->currentFlags.ifDatas.back().failed)
         return result;
 
     size_t lastHashPos = 0;

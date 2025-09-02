@@ -103,9 +103,13 @@ class CConfigImpl {
     std::expected<float, std::string>                        parseExpression(const std::string& s);
     SVariable*                                               getVariable(const std::string& name);
 
+    struct SIfBlockData {
+        bool failed = false;
+    };
+
     struct {
-        bool noError       = false;
-        bool inAnIfBlock   = false;
-        bool ifBlockFailed = false;
+        bool                      noError = false;
+
+        std::vector<SIfBlockData> ifDatas;
     } currentFlags;
 };
