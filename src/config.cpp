@@ -283,15 +283,11 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
     CParseResult result;
 
     std::string  valueName;
-    std::string  catPrefix;
     for (auto& c : impl->categories) {
         valueName += c + ':';
-        catPrefix += c + ':';
     }
 
     valueName += command;
-
-    const auto VALUEONLYNAME = command.starts_with(catPrefix) ? command.substr(catPrefix.length()) : command;
 
     // FIXME: this will bug with nested.
     if (valueName.contains('[') && valueName.contains(']')) {
@@ -306,7 +302,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
             // if it doesn't exist, make it
             for (auto& sc : impl->specialCategoryDescriptors) {
-                if (sc->key.empty() || !valueName.starts_with(sc->name))
+                if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
                     continue;
 
                 // bingo
@@ -358,11 +354,14 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
         if (!found) {
             // could be a dynamic category that doesnt exist yet
             for (auto& sc : impl->specialCategoryDescriptors) {
-                if (sc->key.empty() || !valueName.starts_with(sc->name))
+                if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
                     continue;
 
-                // category does exist, check if value exists
-                if (!sc->defaultValues.contains(VALUEONLYNAME) && VALUEONLYNAME != sc->key)
+                // found value root to be a special category, get the trunk
+                const auto VALUETRUNK = valueName.substr(sc->name.length() + 1);
+
+                // check if trunk is a value within the special category
+                if (!sc->defaultValues.contains(VALUETRUNK) && VALUETRUNK != sc->key)
                     break;
 
                 // bingo
@@ -835,9 +834,12 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 return result;
             }
 
-            impl->currentSpecialKey      = "";
-            impl->currentSpecialCategory = nullptr;
             impl->categories.pop_back();
+
+            if (impl->categories.empty()) {
+                impl->currentSpecialKey      = "";
+                impl->currentSpecialCategory = nullptr;
+            }
         } else {
             // open a category.
             if (!line.ends_with("{")) {

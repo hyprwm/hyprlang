@@ -154,6 +154,12 @@ int main(int argc, char** argv, char** envp) {
         config.addSpecialCategory("specialAnonymous", {.key = nullptr, .ignoreMissing = false, .anonymousKeyBased = true});
         config.addSpecialConfigValue("specialAnonymous", "value", (Hyprlang::INT)0);
 
+        config.addSpecialCategory("specialAnonymousNested", {.key = nullptr, .ignoreMissing = false, .anonymousKeyBased = true});
+        config.addSpecialConfigValue("specialAnonymousNested", "nested:value1", (Hyprlang::INT)0);
+        config.addSpecialConfigValue("specialAnonymousNested", "nested:value2", (Hyprlang::INT)0);
+        config.addSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value1", (Hyprlang::INT)0);
+        config.addSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value2", (Hyprlang::INT)0);
+
         config.addConfigValue("multiline", "");
 
         config.commence();
@@ -302,7 +308,20 @@ int main(int argc, char** argv, char** envp) {
         // test anonymous
         EXPECT(config.listKeysForSpecialCategory("specialAnonymous").size(), 2);
         const auto KEYS = config.listKeysForSpecialCategory("specialAnonymous");
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymous", "value", KEYS[0].c_str())), 2);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymous", "value", KEYS[1].c_str())), 3);
+
+        // test anonymous nested
+        EXPECT(config.listKeysForSpecialCategory("specialAnonymousNested").size(), 2);
+        const auto KEYS2 = config.listKeysForSpecialCategory("specialAnonymousNested");
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value1", KEYS2[0].c_str())), 1);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value2", KEYS2[0].c_str())), 2);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value1", KEYS2[1].c_str())), 3);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value2", KEYS2[1].c_str())), 4);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value1", KEYS2[0].c_str())), 10);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value2", KEYS2[0].c_str())), 11);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value1", KEYS2[1].c_str())), 12);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value2", KEYS2[1].c_str())), 13);
 
         // test sourcing
         std::cout << " → Testing sourcing\n";
