@@ -289,7 +289,6 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
     valueName += command;
 
-    // FIXME: this will bug with nested.
     if (valueName.contains('[') && valueName.contains(']')) {
         const auto L = valueName.find_first_of('[');
         const auto R = valueName.find_last_of(']');
@@ -300,12 +299,26 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
             valueName = valueName.substr(0, L) + valueName.substr(R + 1);
 
-            // if it doesn't exist, make it
             for (auto& sc : impl->specialCategoryDescriptors) {
                 if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
                     continue;
 
-                // bingo
+                bool keyExists = false;
+                for (const auto& specialCat : impl->specialCategories) {
+                    if (specialCat->key != sc->key || specialCat->name != sc->name)
+                        continue;
+
+                    if (strcmp(std::any_cast<const char*>(specialCat->values[sc->key].getValue()), CATKEY.c_str()))
+                        continue;
+
+                    // existing special
+                    keyExists = true;
+                }
+
+                if (keyExists)
+                    break;
+
+                // if it doesn't exist, make it
                 const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
                 PCAT->descriptor = sc.get();
                 PCAT->name       = sc->name;
@@ -549,7 +562,7 @@ std::optional<std::string> CConfigImpl::parseComment(const std::string& comment)
 
     if (!ifBlockVariable.empty()) {
         if (ifBlockVariable.starts_with("!")) {
-            negated = true;
+            negated         = true;
             ifBlockVariable = ifBlockVariable.substr(1);
         }
 
