@@ -308,7 +308,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                     if (specialCat->key != sc->key || specialCat->name != sc->name)
                         continue;
 
-                    if (strcmp(std::any_cast<const char*>(specialCat->values[sc->key].getValue()), CATKEY.c_str()))
+                    if (CATKEY != std::string{std::any_cast<const char*>(specialCat->values[sc->key].getValue())})
                         continue;
 
                     // existing special
