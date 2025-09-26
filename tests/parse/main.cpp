@@ -154,6 +154,12 @@ int main(int argc, char** argv, char** envp) {
         config.addSpecialCategory("specialAnonymous", {.key = nullptr, .ignoreMissing = false, .anonymousKeyBased = true});
         config.addSpecialConfigValue("specialAnonymous", "value", (Hyprlang::INT)0);
 
+        config.addSpecialCategory("specialAnonymousNested", {.key = nullptr, .ignoreMissing = false, .anonymousKeyBased = true});
+        config.addSpecialConfigValue("specialAnonymousNested", "nested:value1", (Hyprlang::INT)0);
+        config.addSpecialConfigValue("specialAnonymousNested", "nested:value2", (Hyprlang::INT)0);
+        config.addSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value1", (Hyprlang::INT)0);
+        config.addSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value2", (Hyprlang::INT)0);
+
         config.addConfigValue("multiline", "");
 
         config.commence();
@@ -288,6 +294,12 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialGeneric:two", "value")), 2);
         EXPECT(config.parseDynamic("special[b]:value = 3").error, false);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "b")), 3);
+        EXPECT(config.parseDynamic("specialAnonymousNested[c]:nested:value1 = 4").error, false);
+        EXPECT(config.parseDynamic("specialAnonymousNested[c]:nested:value2 = 5").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value1", "c")), (Hyprlang::INT)4);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value2", "c")), (Hyprlang::INT)5);
+        EXPECT(config.parseDynamic("specialAnonymousNested[c]:nested:value2 = 6").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value2", "c")), (Hyprlang::INT)6);
 
         // test dynamic special variable
         EXPECT(config.parseDynamic("$SPECIALVAL1 = 2").error, false);
@@ -302,7 +314,20 @@ int main(int argc, char** argv, char** envp) {
         // test anonymous
         EXPECT(config.listKeysForSpecialCategory("specialAnonymous").size(), 2);
         const auto KEYS = config.listKeysForSpecialCategory("specialAnonymous");
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymous", "value", KEYS[0].c_str())), 2);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymous", "value", KEYS[1].c_str())), 3);
+
+        // test anonymous nested
+        EXPECT(config.listKeysForSpecialCategory("specialAnonymousNested").size(), 2 + /*from dynamic*/ 1);
+        const auto KEYS2 = config.listKeysForSpecialCategory("specialAnonymousNested");
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value1", KEYS2[0].c_str())), 1);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value2", KEYS2[0].c_str())), 2);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value1", KEYS2[1].c_str())), 3);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value2", KEYS2[1].c_str())), 4);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value1", KEYS2[0].c_str())), 10);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value2", KEYS2[0].c_str())), 11);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value1", KEYS2[1].c_str())), 12);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value2", KEYS2[1].c_str())), 13);
 
         // test sourcing
         std::cout << " → Testing sourcing\n";

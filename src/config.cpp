@@ -283,17 +283,12 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
     CParseResult result;
 
     std::string  valueName;
-    std::string  catPrefix;
     for (auto& c : impl->categories) {
         valueName += c + ':';
-        catPrefix += c + ':';
     }
 
     valueName += command;
 
-    const auto VALUEONLYNAME = command.starts_with(catPrefix) ? command.substr(catPrefix.length()) : command;
-
-    // FIXME: this will bug with nested.
     if (valueName.contains('[') && valueName.contains(']')) {
         const auto L = valueName.find_first_of('[');
         const auto R = valueName.find_last_of(']');
@@ -304,12 +299,26 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
             valueName = valueName.substr(0, L) + valueName.substr(R + 1);
 
-            // if it doesn't exist, make it
             for (auto& sc : impl->specialCategoryDescriptors) {
-                if (sc->key.empty() || !valueName.starts_with(sc->name))
+                if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
                     continue;
 
-                // bingo
+                bool keyExists = false;
+                for (const auto& specialCat : impl->specialCategories) {
+                    if (specialCat->key != sc->key || specialCat->name != sc->name)
+                        continue;
+
+                    if (CATKEY != std::string_view{std::any_cast<const char*>(specialCat->values[sc->key].getValue())})
+                        continue;
+
+                    // existing special
+                    keyExists = true;
+                }
+
+                if (keyExists)
+                    break;
+
+                // if it doesn't exist, make it
                 const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
                 PCAT->descriptor = sc.get();
                 PCAT->name       = sc->name;
@@ -358,11 +367,14 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
         if (!found) {
             // could be a dynamic category that doesnt exist yet
             for (auto& sc : impl->specialCategoryDescriptors) {
-                if (sc->key.empty() || !valueName.starts_with(sc->name))
+                if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
                     continue;
 
-                // category does exist, check if value exists
-                if (!sc->defaultValues.contains(VALUEONLYNAME) && VALUEONLYNAME != sc->key)
+                // found value root to be a special category, get the trunk
+                const auto VALUETRUNK = valueName.substr(sc->name.length() + 1);
+
+                // check if trunk is a value within the special category
+                if (!sc->defaultValues.contains(VALUETRUNK) && VALUETRUNK != sc->key)
                     break;
 
                 // bingo
@@ -550,7 +562,7 @@ std::optional<std::string> CConfigImpl::parseComment(const std::string& comment)
 
     if (!ifBlockVariable.empty()) {
         if (ifBlockVariable.starts_with("!")) {
-            negated = true;
+            negated         = true;
             ifBlockVariable = ifBlockVariable.substr(1);
         }
 
@@ -835,9 +847,12 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
                 return result;
             }
 
-            impl->currentSpecialKey      = "";
-            impl->currentSpecialCategory = nullptr;
             impl->categories.pop_back();
+
+            if (impl->categories.empty()) {
+                impl->currentSpecialKey      = "";
+                impl->currentSpecialCategory = nullptr;
+            }
         } else {
             // open a category.
             if (!line.ends_with("{")) {
