@@ -442,17 +442,17 @@ namespace Hyprlang {
         }
 
       private:
-        bool         m_bCommenced = false;
+        bool                          m_bCommenced = false;
 
-        CConfigImpl* impl;
+        CConfigImpl*                  impl;
 
-        CParseResult parseLine(std::string line, bool dynamic = false);
-        CParseResult configSetValueSafe(const std::string& command, const std::string& value);
-        CParseResult parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic = false);
-        void         clearState();
-        void         applyDefaultsToCat(SSpecialCategory& cat);
-        void         retrieveKeysForCat(const char* category, const char*** out, size_t* len);
-        CParseResult parseRawStream(const std::string& stream);
+        CParseResult                  parseLine(std::string line, bool dynamic = false);
+        std::pair<bool, CParseResult> configSetValueSafe(const std::string& command, const std::string& value);
+        CParseResult                  parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic = false);
+        void                          clearState();
+        void                          applyDefaultsToCat(SSpecialCategory& cat);
+        void                          retrieveKeysForCat(const char* category, const char*** out, size_t* len);
+        CParseResult                  parseRawStream(const std::string& stream);
     };
 
     /*!

@@ -23,12 +23,13 @@ namespace Colors {
     }
 
 // globals for testing
-bool                            barrelRoll    = false;
-std::string                     flagsFound    = "";
-Hyprlang::CConfig*              pConfig       = nullptr;
-std::string                     currentPath   = "";
-std::string                     ignoreKeyword = "";
-std::string                     useKeyword    = "";
+bool                            barrelRoll                   = false;
+std::string                     flagsFound                   = "";
+Hyprlang::CConfig*              pConfig                      = nullptr;
+std::string                     currentPath                  = "";
+std::string                     ignoreKeyword                = "";
+std::string                     useKeyword                   = "";
+bool                            testHandlerDontOverrideValue = false;
 static std::vector<std::string> categoryKeywordActualValues;
 
 static Hyprlang::CParseResult   handleDoABarrelRoll(const char* COMMAND, const char* VALUE) {
@@ -73,6 +74,14 @@ static Hyprlang::CParseResult handleSource(const char* COMMAND, const char* VALU
     std::string PATH = std::filesystem::canonical(currentPath + "/" + VALUE);
     return pConfig->parseFile(PATH.c_str());
 }
+
+static Hyprlang::CParseResult handleTestHandlerDontOverride(const char* COMMAND, const char* VALUE) {
+    testHandlerDontOverrideValue = true;
+
+    Hyprlang::CParseResult result;
+    return result;
+}
+
 
 static Hyprlang::CParseResult handleCustomValueSet(const char* VALUE, void** data) {
     if (!*data)
@@ -147,12 +156,14 @@ int main(int argc, char** argv, char** envp) {
         config.registerHandler(&handleTestUseKeyword, ":testUseKeyword", {.allowFlags = false});
         config.registerHandler(&handleNoop, "testCategory:testUseKeyword", {.allowFlags = false});
         config.registerHandler(&handleCategoryKeyword, "testCategory:categoryKeyword", {.allowFlags = false});
+        config.registerHandler(&handleTestHandlerDontOverride, "testHandlerDontOverride", {.allowFlags = false});
 
         config.addSpecialCategory("special", {.key = "key"});
         config.addSpecialConfigValue("special", "value", (Hyprlang::INT)0);
 
         config.addSpecialCategory("specialAnonymous", {.key = nullptr, .ignoreMissing = false, .anonymousKeyBased = true});
         config.addSpecialConfigValue("specialAnonymous", "value", (Hyprlang::INT)0);
+        config.addSpecialConfigValue("specialAnonymous", "testHandlerDontOverride", (Hyprlang::INT)0);
 
         config.addSpecialCategory("specialAnonymousNested", {.key = nullptr, .ignoreMissing = false, .anonymousKeyBased = true});
         config.addSpecialConfigValue("specialAnonymousNested", "nested:value1", (Hyprlang::INT)0);
@@ -239,6 +250,7 @@ int main(int argc, char** argv, char** envp) {
         std::cout << " → Testing handlers\n";
         EXPECT(barrelRoll, true);
         EXPECT(flagsFound, std::string{"abc"});
+        EXPECT(testHandlerDontOverrideValue, false);
 
         EXPECT(categoryKeywordActualValues.at(0), "we are having fun");
         EXPECT(categoryKeywordActualValues.at(1), "so much fun");
@@ -315,6 +327,7 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(config.listKeysForSpecialCategory("specialAnonymous").size(), 2);
         const auto KEYS = config.listKeysForSpecialCategory("specialAnonymous");
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymous", "value", KEYS[0].c_str())), 2);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymous", "testHandlerDontOverride", KEYS[0].c_str())), 1);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymous", "value", KEYS[1].c_str())), 3);
 
         // test anonymous nested

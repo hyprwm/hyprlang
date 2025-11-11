@@ -279,7 +279,8 @@ static std::expected<int64_t, std::string> configStringToInt(const std::string& 
     return 0;
 }
 
-CParseResult CConfig::configSetValueSafe(const std::string& command, const std::string& value) {
+// found, result
+std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& command, const std::string& value) {
     CParseResult result;
 
     std::string  valueName;
@@ -358,7 +359,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                 if (VALUEIT != sc->values.end())
                     found = true;
                 else if (sc->descriptor->dontErrorOnMissing)
-                    return result; // will return a success, cuz we want to ignore missing
+                    return {true, result}; // will return a success, cuz we want to ignore missing
 
                 break;
             }
@@ -407,7 +408,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                 } else {
                     if (VALUEIT == PCAT->values.end() || VALUEIT->first != sc->key) {
                         result.setError(std::format("special category's first value must be the key. Key for <{}> is <{}>", PCAT->name, PCAT->key));
-                        return result;
+                        return {true, result};
                     }
                     impl->currentSpecialKey = value;
                 }
@@ -418,7 +419,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
         if (!found) {
             result.setError(std::format("config option <{}> does not exist.", valueName));
-            return result;
+            return {false, result};
         }
     }
 
@@ -428,7 +429,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
             const auto INT = configStringToInt(value);
             if (!INT.has_value()) {
                 result.setError(INT.error());
-                return result;
+                return {true, result};
             }
 
             VALUEIT->second.setFrom(INT.value());
@@ -440,7 +441,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                 VALUEIT->second.setFrom(std::stof(value));
             } catch (std::exception& e) {
                 result.setError(std::format("failed parsing a float: {}", e.what()));
-                return result;
+                return {true, result};
             }
             break;
         }
@@ -458,7 +459,7 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
                 VALUEIT->second.setFrom(SVector2D{.x = std::stof(LHS), .y = std::stof(RHS)});
             } catch (std::exception& e) {
                 result.setError(std::format("failed parsing a vec2: {}", e.what()));
-                return result;
+                return {true, result};
             }
             break;
         }
@@ -473,19 +474,19 @@ CParseResult CConfig::configSetValueSafe(const std::string& command, const std::
 
             if (RESULT.error) {
                 result.setError(RESULT.getError());
-                return result;
+                return {true, result};
             }
             break;
         }
         default: {
             result.setError("internal error: invalid value found (no type?)");
-            return result;
+            return {true, result};
         }
     }
 
     VALUEIT->second.m_bSetByUser = true;
 
-    return result;
+    return {true, result};
 }
 
 CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& rhs, bool dynamic) {
@@ -791,45 +792,50 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
 
         bool found = false;
 
-        for (auto& h : impl->handlers) {
-            // we want to handle potentially nested keywords and ensure
-            // we only call the handler if they are scoped correctly,
-            // unless the keyword is not scoped itself
-
-            const bool UNSCOPED    = !h.name.contains(":");
-            const auto HANDLERNAME = !h.name.empty() && h.name.at(0) == ':' ? h.name.substr(1) : h.name;
-
-            if (!h.options.allowFlags && !UNSCOPED) {
-                size_t colon = 0;
-                size_t idx   = 0;
-                size_t depth = 0;
-
-                while ((colon = HANDLERNAME.find(':', idx)) != std::string::npos && impl->categories.size() > depth) {
-                    auto actual = HANDLERNAME.substr(idx, colon - idx);
-
-                    if (actual != impl->categories[depth])
-                        break;
-
-                    idx = colon + 1;
-                    ++depth;
-                }
-
-                if (depth != impl->categories.size() || HANDLERNAME.substr(idx) != LHS)
-                    continue;
-            }
-
-            if (UNSCOPED && HANDLERNAME != LHS && !h.options.allowFlags)
-                continue;
-
-            if (h.options.allowFlags && (!LHS.starts_with(HANDLERNAME) || LHS.contains(':') /* avoid cases where a category is called the same as a handler */))
-                continue;
-
-            ret   = h.func(LHS.c_str(), RHS.c_str());
-            found = true;
+        if (!impl->configOptions.verifyOnly) {
+            auto [f, rv] = configSetValueSafe(LHS, RHS);
+            found        = f;
+            ret          = std::move(rv);
         }
 
-        if (!found && !impl->configOptions.verifyOnly)
-            ret = configSetValueSafe(LHS, RHS);
+        if (!found) {
+            for (auto& h : impl->handlers) {
+                // we want to handle potentially nested keywords and ensure
+                // we only call the handler if they are scoped correctly,
+                // unless the keyword is not scoped itself
+
+                const bool UNSCOPED    = !h.name.contains(":");
+                const auto HANDLERNAME = !h.name.empty() && h.name.at(0) == ':' ? h.name.substr(1) : h.name;
+
+                if (!h.options.allowFlags && !UNSCOPED) {
+                    size_t colon = 0;
+                    size_t idx   = 0;
+                    size_t depth = 0;
+
+                    while ((colon = HANDLERNAME.find(':', idx)) != std::string::npos && impl->categories.size() > depth) {
+                        auto actual = HANDLERNAME.substr(idx, colon - idx);
+
+                        if (actual != impl->categories[depth])
+                            break;
+
+                        idx = colon + 1;
+                        ++depth;
+                    }
+
+                    if (depth != impl->categories.size() || HANDLERNAME.substr(idx) != LHS)
+                        continue;
+                }
+
+                if (UNSCOPED && HANDLERNAME != LHS && !h.options.allowFlags)
+                    continue;
+
+                if (h.options.allowFlags && (!LHS.starts_with(HANDLERNAME) || LHS.contains(':') /* avoid cases where a category is called the same as a handler */))
+                    continue;
+
+                ret   = h.func(LHS.c_str(), RHS.c_str());
+                found = true;
+            }
+        }
 
         if (ret.error)
             return ret;
