@@ -793,9 +793,10 @@ CParseResult CConfig::parseLine(std::string line, bool dynamic) {
         bool found = false;
 
         if (!impl->configOptions.verifyOnly) {
-            auto [f, rv] = configSetValueSafe(LHS, RHS);
-            found        = f;
-            ret          = std::move(rv);
+            auto [f, rv]    = configSetValueSafe(LHS, RHS);
+            found           = f;
+            ret             = std::move(rv);
+            ret.errorString = ret.errorStdString.c_str();
         }
 
         if (!found) {
