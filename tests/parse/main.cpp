@@ -313,6 +313,11 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(config.parseDynamic("specialAnonymousNested[c]:nested:value2 = 6").error, false);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value2", "c")), (Hyprlang::INT)6);
 
+        EXPECT(config.parseDynamic("special[a]:value = 69").error, false);
+        EXPECT(config.parseDynamic("special[b]:value = 420").error, false);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "a")), 69);
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "b")), 420);
+
         // test dynamic special variable
         EXPECT(config.parseDynamic("$SPECIALVAL1 = 2").error, false);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "a")), (Hyprlang::INT)2);

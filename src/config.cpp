@@ -290,6 +290,10 @@ std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& com
 
     valueName += command;
 
+    // TODO: all this sucks xD
+
+    SSpecialCategory* overrideSpecialCat = nullptr;
+
     if (valueName.contains('[') && valueName.contains(']')) {
         const auto L = valueName.find_first_of('[');
         const auto R = valueName.find_last_of(']');
@@ -313,7 +317,8 @@ std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& com
                         continue;
 
                     // existing special
-                    keyExists = true;
+                    keyExists          = true;
+                    overrideSpecialCat = specialCat.get();
                 }
 
                 if (keyExists)
@@ -329,6 +334,8 @@ std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& com
                 applyDefaultsToCat(*PCAT);
 
                 PCAT->values[sc->key].setFrom(CATKEY);
+                overrideSpecialCat = PCAT;
+                break;
             }
         }
     }
@@ -338,82 +345,89 @@ std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& com
         // it might be in a special category
         bool found = false;
 
-        if (impl->currentSpecialCategory && valueName.starts_with(impl->currentSpecialCategory->name)) {
-            VALUEIT = impl->currentSpecialCategory->values.find(valueName.substr(impl->currentSpecialCategory->name.length() + 1));
+        if (overrideSpecialCat) {
+            VALUEIT = overrideSpecialCat->values.find(valueName.substr(overrideSpecialCat->name.length() + 1));
 
-            if (VALUEIT != impl->currentSpecialCategory->values.end())
+            if (VALUEIT != overrideSpecialCat->values.end())
                 found = true;
-        }
+        } else {
+            if (impl->currentSpecialCategory && valueName.starts_with(impl->currentSpecialCategory->name)) {
+                VALUEIT = impl->currentSpecialCategory->values.find(valueName.substr(impl->currentSpecialCategory->name.length() + 1));
 
-        if (!found) {
-            for (auto& sc : impl->specialCategories) {
-                if (!valueName.starts_with(sc->name))
-                    continue;
-
-                if (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != impl->currentSpecialKey)
-                    continue;
-
-                VALUEIT                      = sc->values.find(valueName.substr(sc->name.length() + 1));
-                impl->currentSpecialCategory = sc.get();
-
-                if (VALUEIT != sc->values.end())
+                if (VALUEIT != impl->currentSpecialCategory->values.end())
                     found = true;
-                else if (sc->descriptor->dontErrorOnMissing)
-                    return {true, result}; // will return a success, cuz we want to ignore missing
-
-                break;
             }
-        }
 
-        if (!found) {
-            // could be a dynamic category that doesnt exist yet
-            for (auto& sc : impl->specialCategoryDescriptors) {
-                if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
-                    continue;
+            if (!found) {
+                for (auto& sc : impl->specialCategories) {
+                    if (!valueName.starts_with(sc->name))
+                        continue;
 
-                // found value root to be a special category, get the trunk
-                const auto VALUETRUNK = valueName.substr(sc->name.length() + 1);
+                    if (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != impl->currentSpecialKey)
+                        continue;
 
-                // check if trunk is a value within the special category
-                if (!sc->defaultValues.contains(VALUETRUNK) && VALUETRUNK != sc->key)
+                    VALUEIT                      = sc->values.find(valueName.substr(sc->name.length() + 1));
+                    impl->currentSpecialCategory = sc.get();
+
+                    if (VALUEIT != sc->values.end())
+                        found = true;
+                    else if (sc->descriptor->dontErrorOnMissing)
+                        return {true, result}; // will return a success, cuz we want to ignore missing
+
                     break;
-
-                // bingo
-                const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
-                PCAT->descriptor = sc.get();
-                PCAT->name       = sc->name;
-                PCAT->key        = sc->key;
-                addSpecialConfigValue(sc->name.c_str(), sc->key.c_str(), CConfigValue("0"));
-
-                applyDefaultsToCat(*PCAT);
-
-                VALUEIT                      = PCAT->values.find(valueName.substr(sc->name.length() + 1));
-                impl->currentSpecialCategory = PCAT;
-
-                if (VALUEIT != PCAT->values.end())
-                    found = true;
-
-                if (sc->anonymous) {
-                    // find suitable key
-                    size_t biggest = 0;
-                    for (auto& catt : impl->specialCategories) {
-                        biggest = std::max(catt->anonymousID, biggest);
-                    }
-
-                    biggest++;
-
-                    PCAT->values[ANONYMOUS_KEY].setFrom(std::to_string(biggest));
-                    impl->currentSpecialKey = std::to_string(biggest);
-                    PCAT->anonymousID       = biggest;
-                } else {
-                    if (VALUEIT == PCAT->values.end() || VALUEIT->first != sc->key) {
-                        result.setError(std::format("special category's first value must be the key. Key for <{}> is <{}>", PCAT->name, PCAT->key));
-                        return {true, result};
-                    }
-                    impl->currentSpecialKey = value;
                 }
+            }
 
-                break;
+            if (!found) {
+                // could be a dynamic category that doesnt exist yet
+                for (auto& sc : impl->specialCategoryDescriptors) {
+                    if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
+                        continue;
+
+                    // found value root to be a special category, get the trunk
+                    const auto VALUETRUNK = valueName.substr(sc->name.length() + 1);
+
+                    // check if trunk is a value within the special category
+                    if (!sc->defaultValues.contains(VALUETRUNK) && VALUETRUNK != sc->key)
+                        break;
+
+                    // bingo
+                    const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
+                    PCAT->descriptor = sc.get();
+                    PCAT->name       = sc->name;
+                    PCAT->key        = sc->key;
+                    addSpecialConfigValue(sc->name.c_str(), sc->key.c_str(), CConfigValue("0"));
+
+                    applyDefaultsToCat(*PCAT);
+
+                    VALUEIT                      = PCAT->values.find(valueName.substr(sc->name.length() + 1));
+                    impl->currentSpecialCategory = PCAT;
+
+                    if (VALUEIT != PCAT->values.end())
+                        found = true;
+
+                    if (sc->anonymous) {
+                        // find suitable key
+                        size_t biggest = 0;
+                        for (auto& catt : impl->specialCategories) {
+                            biggest = std::max(catt->anonymousID, biggest);
+                        }
+
+                        biggest++;
+
+                        PCAT->values[ANONYMOUS_KEY].setFrom(std::to_string(biggest));
+                        impl->currentSpecialKey = std::to_string(biggest);
+                        PCAT->anonymousID       = biggest;
+                    } else {
+                        if (VALUEIT == PCAT->values.end() || VALUEIT->first != sc->key) {
+                            result.setError(std::format("special category's first value must be the key. Key for <{}> is <{}>", PCAT->name, PCAT->key));
+                            return {true, result};
+                        }
+                        impl->currentSpecialKey = value;
+                    }
+
+                    break;
+                }
             }
         }
 
@@ -1016,11 +1030,15 @@ CParseResult CConfig::parseFile(const char* file) {
 }
 
 CParseResult CConfig::parseDynamic(const char* line) {
-    return parseLine(line, true);
+    auto ret = parseLine(line, true);
+    impl->currentSpecialCategory = nullptr;
+    return ret;
 }
 
 CParseResult CConfig::parseDynamic(const char* command, const char* value) {
-    return parseLine(std::string{command} + "=" + std::string{value}, true);
+    auto ret = parseLine(std::string{command} + "=" + std::string{value}, true);
+    impl->currentSpecialCategory = nullptr;
+    return ret;
 }
 
 void CConfig::clearState() {
