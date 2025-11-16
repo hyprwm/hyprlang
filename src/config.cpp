@@ -372,7 +372,7 @@ std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& com
                     if (VALUEIT != sc->values.end())
                         found = true;
                     else if (sc->descriptor->dontErrorOnMissing)
-                        return {true, result}; // will return a success, cuz we want to ignore missing
+                        return {false, result}; // will return a success, cuz we want to ignore missing
 
                     break;
                 }
