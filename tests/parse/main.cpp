@@ -108,6 +108,8 @@ int main(int argc, char** argv, char** envp) {
         if (!getenv("SHELL"))
             setenv("SHELL", "/bin/sh", true);
 
+        setenv("TEST_ENV", "1", true);
+
         std::cout << "Starting test\n";
 
         Hyprlang::CConfig config("./config/config.conf", {});
@@ -130,6 +132,7 @@ int main(int argc, char** argv, char** envp) {
         config.addConfigValue("testString", "");
         config.addConfigValue("testStringColon", "");
         config.addConfigValue("testEnv", "");
+        config.addConfigValue("testEnv2", "");
         config.addConfigValue("testVar", (Hyprlang::INT)0);
         config.addConfigValue("categoryKeyword", (Hyprlang::STRING) "");
         config.addConfigValue("testStringQuotes", "");
@@ -297,6 +300,7 @@ int main(int argc, char** argv, char** envp) {
         // test env variables
         std::cout << " → Testing env variables\n";
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testEnv")), std::string{getenv("SHELL")});
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEnv2")), std::string{"1"});
 
         // test special categories
         std::cout << " → Testing special categories\n";
@@ -359,6 +363,12 @@ int main(int argc, char** argv, char** envp) {
 
         // test multiline config
         EXPECT(std::any_cast<const char*>(config.getConfigValue("multiline")), std::string{"very        long            command"});
+
+        // test dynamic env
+        setenv("TEST_ENV", "2", true);
+        config.parse();
+        std::cout << " → Testing dynamic env variables\n";
+        EXPECT(std::any_cast<const char*>(config.getConfigValue("testEnv2")), std::string{"2"});
 
         std::cout << " → Testing error.conf\n";
         Hyprlang::CConfig errorConfig("./config/error.conf", {.verifyOnly = true, .throwAllErrors = true});

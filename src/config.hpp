@@ -102,6 +102,7 @@ class CConfigImpl {
     std::optional<std::string>                               parseComment(const std::string& comment);
     std::expected<float, std::string>                        parseExpression(const std::string& s);
     SVariable*                                               getVariable(const std::string& name);
+    void                                                     recheckEnv();
 
     struct SIfBlockData {
         bool failed = false;

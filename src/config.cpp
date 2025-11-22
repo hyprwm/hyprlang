@@ -78,13 +78,7 @@ CConfig::CConfig(const char* path, const Hyprlang::SConfigOptions& options_) : i
             throw "File does not exist";
     }
 
-    impl->envVariables.clear();
-    for (char** env = environ; *env; ++env) {
-        const std::string ENVVAR   = *env ? *env : "";
-        const auto        VARIABLE = ENVVAR.substr(0, ENVVAR.find_first_of('='));
-        const auto        VALUE    = ENVVAR.substr(ENVVAR.find_first_of('=') + 1);
-        impl->envVariables.push_back({VARIABLE, VALUE});
-    }
+    impl->recheckEnv();
 
     std::ranges::sort(impl->envVariables, [&](const auto& a, const auto& b) { return a.name.length() > b.name.length(); });
 
@@ -526,6 +520,16 @@ CParseResult CConfig::parseVariable(const std::string& lhs, const std::string& r
 
     CParseResult result;
     return result;
+}
+
+void CConfigImpl::recheckEnv() {
+    envVariables.clear();
+    for (char** env = environ; *env; ++env) {
+        const std::string ENVVAR   = *env ? *env : "";
+        const auto        VARIABLE = ENVVAR.substr(0, ENVVAR.find_first_of('='));
+        const auto        VALUE    = ENVVAR.substr(ENVVAR.find_first_of('=') + 1);
+        envVariables.push_back({VARIABLE, VALUE});
+    }
 }
 
 SVariable* CConfigImpl::getVariable(const std::string& name) {
@@ -1030,13 +1034,13 @@ CParseResult CConfig::parseFile(const char* file) {
 }
 
 CParseResult CConfig::parseDynamic(const char* line) {
-    auto ret = parseLine(line, true);
+    auto ret                     = parseLine(line, true);
     impl->currentSpecialCategory = nullptr;
     return ret;
 }
 
 CParseResult CConfig::parseDynamic(const char* command, const char* value) {
-    auto ret = parseLine(std::string{command} + "=" + std::string{value}, true);
+    auto ret                     = parseLine(std::string{command} + "=" + std::string{value}, true);
     impl->currentSpecialCategory = nullptr;
     return ret;
 }
@@ -1044,7 +1048,8 @@ CParseResult CConfig::parseDynamic(const char* command, const char* value) {
 void CConfig::clearState() {
     impl->categories.clear();
     impl->parseError = "";
-    impl->variables  = impl->envVariables;
+    impl->recheckEnv();
+    impl->variables = impl->envVariables;
     std::erase_if(impl->specialCategories, [](const auto& e) { return !e->isStatic; });
 }
 
