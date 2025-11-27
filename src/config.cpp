@@ -931,6 +931,10 @@ CParseResult CConfig::parse() {
     return fileParseResult;
 }
 
+void CConfig::changeRootPath(const char* path) {
+    impl->path = path;
+}
+
 CParseResult CConfig::parseRawStream(const std::string& stream) {
     CParseResult      result;
 

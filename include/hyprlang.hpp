@@ -441,6 +441,13 @@ namespace Hyprlang {
             return result;
         }
 
+        /*!
+            Change the root path of the config
+
+            \since 0.6.7
+        */
+        void changeRootPath(const char* path);
+
       private:
         bool                          m_bCommenced = false;
 
