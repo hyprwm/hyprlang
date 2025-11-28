@@ -352,9 +352,13 @@ std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& com
                     found = true;
             }
 
+            // probably a handler
+            if (!valueName.contains(":"))
+                return {false, result};
+
             if (!found) {
                 for (auto& sc : impl->specialCategories) {
-                    if (!valueName.starts_with(sc->name))
+                    if (!valueName.starts_with(sc->name + ":"))
                         continue;
 
                     if (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != impl->currentSpecialKey)

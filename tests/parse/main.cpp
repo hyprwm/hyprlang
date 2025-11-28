@@ -29,6 +29,7 @@ Hyprlang::CConfig*              pConfig                      = nullptr;
 std::string                     currentPath                  = "";
 std::string                     ignoreKeyword                = "";
 std::string                     useKeyword                   = "";
+std::string                     sameKeywordSpecialCat        = "";
 bool                            testHandlerDontOverrideValue = false;
 static std::vector<std::string> categoryKeywordActualValues;
 
@@ -75,13 +76,18 @@ static Hyprlang::CParseResult handleSource(const char* COMMAND, const char* VALU
     return pConfig->parseFile(PATH.c_str());
 }
 
+static Hyprlang::CParseResult handleSameKeywordSpecialCat(const char* COMMAND, const char* VALUE) {
+    sameKeywordSpecialCat = VALUE;
+
+    return Hyprlang::CParseResult();
+}
+
 static Hyprlang::CParseResult handleTestHandlerDontOverride(const char* COMMAND, const char* VALUE) {
     testHandlerDontOverrideValue = true;
 
     Hyprlang::CParseResult result;
     return result;
 }
-
 
 static Hyprlang::CParseResult handleCustomValueSet(const char* VALUE, void** data) {
     if (!*data)
@@ -176,7 +182,16 @@ int main(int argc, char** argv, char** envp) {
 
         config.addConfigValue("multiline", "");
 
+        config.registerHandler(&handleSameKeywordSpecialCat, "sameKeywordSpecialCat", {.allowFlags = false});
+        config.addSpecialCategory("sameKeywordSpecialCat", {.key = nullptr, .ignoreMissing = true, .anonymousKeyBased = false});
+
         config.commence();
+
+        config.addSpecialCategory("sameKeywordSpecialCat:one", {.key = nullptr, .ignoreMissing = true});
+        config.addSpecialConfigValue("sameKeywordSpecialCat:one", "some_size", (Hyprlang::INT)10);
+        config.addSpecialConfigValue("sameKeywordSpecialCat:one", "some_radius", (Hyprlang::FLOAT)0.0);
+        config.addSpecialCategory("sameKeywordSpecialCat:two", {.key = nullptr, .ignoreMissing = true});
+        config.addSpecialConfigValue("sameKeywordSpecialCat:two", "hola", "");
 
         config.addSpecialCategory("specialGeneric:one", {.key = nullptr, .ignoreMissing = true});
         config.addSpecialConfigValue("specialGeneric:one", "value", (Hyprlang::INT)0);
@@ -215,6 +230,12 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<const char*>(config.getConfigValue("testCategory:nested1:categoryKeyword")), std::string{"this one should not either"});
         EXPECT(ignoreKeyword, "aaa");
         EXPECT(useKeyword, "yes");
+
+        // test special category with same name as a keyword
+        EXPECT(sameKeywordSpecialCat, std::string_view{"pablo"});
+        EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("sameKeywordSpecialCat:one", "some_size")), (Hyprlang::INT)44);
+        EXPECT(std::any_cast<float>(config.getSpecialConfigValue("sameKeywordSpecialCat:one", "some_radius")), (Hyprlang::FLOAT)7.6);
+        EXPECT(std::any_cast<const char*>(config.getSpecialConfigValue("sameKeywordSpecialCat:two", "hola")), std::string_view{"rose"});
 
         // Test templated wrapper
         auto T1 = Hyprlang::CSimpleConfigValue<Hyprlang::INT>(&config, "testInt");
