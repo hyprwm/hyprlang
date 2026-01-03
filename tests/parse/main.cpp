@@ -353,6 +353,19 @@ int main(int argc, char** argv, char** envp) {
         // test listing keys
         EXPECT(config.listKeysForSpecialCategory("special")[1], "b");
 
+        // test empty key value - should be a separate entry from "a" and "b"
+        const auto SPECIAL_KEYS = config.listKeysForSpecialCategory("special");
+        EXPECT(SPECIAL_KEYS.size(), 3);
+        // Find and verify the empty key entry
+        auto emptyKeyIt = std::find(SPECIAL_KEYS.begin(), SPECIAL_KEYS.end(), "");
+        if (emptyKeyIt == SPECIAL_KEYS.end()) {
+            std::cout << Colors::RED << "Failed: " << Colors::RESET << "empty key not found in listKeysForSpecialCategory\n";
+            ret = 1;
+        } else {
+            std::cout << Colors::GREEN << "Passed " << Colors::RESET << "empty key found in listKeysForSpecialCategory\n";
+            EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "")), (Hyprlang::INT)100);
+        }
+
         // test anonymous
         EXPECT(config.listKeysForSpecialCategory("specialAnonymous").size(), 2);
         const auto KEYS = config.listKeysForSpecialCategory("specialAnonymous");
