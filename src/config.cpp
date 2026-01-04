@@ -361,8 +361,22 @@ std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& com
                     if (!valueName.starts_with(sc->name + ":"))
                         continue;
 
-                    if (!sc->isStatic && std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())} != impl->currentSpecialKey)
-                        continue;
+                    if (!sc->isStatic) {
+                        const auto fieldName        = valueName.substr(sc->name.length() + 1);
+                        const auto existingKeyValue = std::string{std::any_cast<const char*>(sc->values[sc->key].getValue())};
+
+                        // When parsing the key field itself, match by the value being set.
+                        // Otherwise, match by currentSpecialKey.
+                        // This ensures multiple blocks with different key values create separate categories,
+                        // and correctly handles empty string keys.
+                        if (fieldName == sc->key) {
+                            if (existingKeyValue != value)
+                                continue;
+                        } else {
+                            if (existingKeyValue != impl->currentSpecialKey)
+                                continue;
+                        }
+                    }
 
                     VALUEIT                      = sc->values.find(valueName.substr(sc->name.length() + 1));
                     impl->currentSpecialCategory = sc.get();
