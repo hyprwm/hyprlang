@@ -998,6 +998,8 @@ CParseResult CConfig::parseRawStream(const std::string& stream) {
         impl->categories.clear();
     }
 
+    impl->currentSpecialCategory = nullptr;
+
     return result;
 }
 
@@ -1051,6 +1053,8 @@ CParseResult CConfig::parseFile(const char* file) {
 
         impl->categories.clear();
     }
+
+    impl->currentSpecialCategory = nullptr;
 
     return result;
 }
