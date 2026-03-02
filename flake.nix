@@ -23,29 +23,10 @@
     pkgsFor = eachSystem (system:
       import nixpkgs {
         localSystem.system = system;
-        overlays = with self.overlays; [hyprlang];
+        overlays = with self.overlays; [hyprlang-with-deps];
       });
-    mkDate = longDate: (lib.concatStringsSep "-" [
-      (builtins.substring 0 4 longDate)
-      (builtins.substring 4 2 longDate)
-      (builtins.substring 6 2 longDate)
-    ]);
-
-    version = lib.removeSuffix "\n" (builtins.readFile ./VERSION);
   in {
-    overlays = {
-      default = self.overlays.hyprlang;
-      hyprlang = lib.composeManyExtensions [
-        inputs.hyprutils.overlays.default
-        (final: prev: {
-          hyprlang = final.callPackage ./nix/default.nix {
-            stdenv = final.gcc15Stdenv;
-            version = version + "+date=" + (mkDate (self.lastModifiedDate or "19700101")) + "_" + (self.shortRev or "dirty");
-          };
-          hyprlang-with-tests = final.hyprlang.override {doCheck = true;};
-        })
-      ];
-    };
+    overlays = import ./nix/overlays.nix { inherit lib self inputs; };
 
     packages = eachSystem (system: {
       default = self.packages.${system}.hyprlang;
