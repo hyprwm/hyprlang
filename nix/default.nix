@@ -17,9 +17,12 @@ stdenv.mkDerivation {
     pkg-config
   ];
 
-  buildInputs = [hyprutils];
+  buildInputs = [ hyprutils ];
 
-  outputs = ["out" "dev"];
+  outputs = [
+    "out"
+    "dev"
+  ];
 
   meta = with lib; {
     homepage = "https://github.com/hyprwm/hyprlang";
