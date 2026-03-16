@@ -14,6 +14,7 @@
 class CConfigImpl;
 struct SConfigDefaultValue;
 struct SSpecialCategory;
+struct SParsedConfigName;
 
 #define HYPRLANG_END_MAGIC 0x1337BEEF
 
@@ -376,6 +377,12 @@ namespace Hyprlang {
         CParseResult parseDynamic(const char* command, const char* value);
 
         /*!
+            Parse a config name string into category, key, name.
+            category and key default to ""
+         */
+        SParsedConfigName parseConfigName(const char* name);
+
+        /*!
             Get a config's value ptr. These are static.
             nullptr on fail
         */
@@ -388,6 +395,11 @@ namespace Hyprlang {
            nullptr on fail.
         */
         CConfigValue* getSpecialConfigValuePtr(const char* category, const char* name, const char* key = nullptr);
+
+        /*!
+           Get a basic or special category's config value ptr by calling `getConfigValuePtr` or `getSpecialConfigValuePtr`
+        */
+        CConfigValue* getAnyConfigValuePtr(const char* name);
 
         /*!
             Get a config value's stored value. Empty on fail
@@ -404,6 +416,13 @@ namespace Hyprlang {
         */
         std::any getSpecialConfigValue(const char* category, const char* name, const char* key = nullptr) {
             CConfigValue* val = getSpecialConfigValuePtr(category, name, key);
+            if (!val)
+                return {};
+            return val->getValue();
+        }
+
+        std::any getAnyConfigValue(const char* name) {
+            CConfigValue* val = getAnyConfigValuePtr(name);
             if (!val)
                 return {};
             return val->getValue();

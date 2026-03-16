@@ -385,6 +385,26 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value1", KEYS2[1].c_str())), 12);
         EXPECT(std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested1:nested2:value2", KEYS2[1].c_str())), 13);
 
+        std::cout << " → Testing the unified config value getter\n";
+        // check against expected counterpart
+        EXPECT(std::any_cast<int64_t>(config.getAnyConfigValue("testInt")), std::any_cast<int64_t>(config.getConfigValue("testInt")));
+        EXPECT(std::any_cast<float>(config.getAnyConfigValue("testFloat")), std::any_cast<float>(config.getConfigValue("testFloat")));
+        EXPECT(std::any_cast<const char*>(config.getAnyConfigValue("testString")), std::any_cast<const char*>(config.getConfigValue("testString")));
+        EXPECT(std::any_cast<int64_t>(config.getAnyConfigValue("special[a]:value")), std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "a")));
+        EXPECT(std::any_cast<int64_t>(config.getAnyConfigValue("special[b]:value")), std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "b")));
+        EXPECT(std::any_cast<int64_t>(config.getAnyConfigValue("special[]:value")), std::any_cast<int64_t>(config.getSpecialConfigValue("special", "value", "")));
+        EXPECT(std::any_cast<int64_t>(config.getAnyConfigValue("specialAnonymousNested[c]:nested:value1")),
+               std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value1", "c")));
+        // check against malformed
+        EXPECT(config.getAnyConfigValuePtr("[a]:value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[[a]:value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[[a]]:value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[a]]:value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[a]value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[avalue"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special]:a[value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("speciala]:value"), nullptr);
+
         // test sourcing
         std::cout << " → Testing sourcing\n";
         EXPECT(std::any_cast<int64_t>(config.getConfigValue("myColors:pink")), (Hyprlang::INT)0xFFc800c8);

@@ -70,6 +70,12 @@ struct SSpecialCategory {
     size_t anonymousID = 0;
 };
 
+struct SParsedConfigName {
+    std::string category = "";
+    std::string key      = "";
+    std::string name     = "";
+};
+
 enum eGetNextLineFailure : uint8_t {
     GETNEXTLINEFAILURE_EOF = 0,
     GETNEXTLINEFAILURE_BACKSLASH,

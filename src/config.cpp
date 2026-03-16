@@ -293,50 +293,44 @@ std::pair<bool, CParseResult> CConfig::configSetValueSafe(const std::string& com
     // TODO: all this sucks xD
 
     SSpecialCategory* overrideSpecialCat = nullptr;
+    const auto        parsedName         = parseConfigName(valueName.c_str());
 
-    if (valueName.contains('[') && valueName.contains(']')) {
-        const auto L = valueName.find_first_of('[');
-        const auto R = valueName.find_last_of(']');
+    if (!parsedName.category.empty()) {
+        impl->currentSpecialKey = parsedName.key;
+        valueName               = parsedName.category + ":" + parsedName.name;
 
-        if (L < R) {
-            const auto CATKEY       = valueName.substr(L + 1, R - L - 1);
-            impl->currentSpecialKey = CATKEY;
+        for (auto& sc : impl->specialCategoryDescriptors) {
+            if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
+                continue;
 
-            valueName = valueName.substr(0, L) + valueName.substr(R + 1);
-
-            for (auto& sc : impl->specialCategoryDescriptors) {
-                if (sc->key.empty() || !valueName.starts_with(sc->name + ":"))
+            bool keyExists = false;
+            for (const auto& specialCat : impl->specialCategories) {
+                if (specialCat->key != sc->key || specialCat->name != sc->name)
                     continue;
 
-                bool keyExists = false;
-                for (const auto& specialCat : impl->specialCategories) {
-                    if (specialCat->key != sc->key || specialCat->name != sc->name)
-                        continue;
+                if (parsedName.key != std::string_view{std::any_cast<const char*>(specialCat->values[sc->key].getValue())})
+                    continue;
 
-                    if (CATKEY != std::string_view{std::any_cast<const char*>(specialCat->values[sc->key].getValue())})
-                        continue;
-
-                    // existing special
-                    keyExists          = true;
-                    overrideSpecialCat = specialCat.get();
-                }
-
-                if (keyExists)
-                    break;
-
-                // if it doesn't exist, make it
-                const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
-                PCAT->descriptor = sc.get();
-                PCAT->name       = sc->name;
-                PCAT->key        = sc->key;
-                addSpecialConfigValue(sc->name.c_str(), sc->key.c_str(), CConfigValue(CATKEY.c_str()));
-
-                applyDefaultsToCat(*PCAT);
-
-                PCAT->values[sc->key].setFrom(CATKEY);
-                overrideSpecialCat = PCAT;
-                break;
+                // existing special
+                keyExists          = true;
+                overrideSpecialCat = specialCat.get();
             }
+
+            if (keyExists)
+                break;
+
+            // if it doesn't exist, make it
+            const auto PCAT  = impl->specialCategories.emplace_back(std::make_unique<SSpecialCategory>()).get();
+            PCAT->descriptor = sc.get();
+            PCAT->name       = sc->name;
+            PCAT->key        = sc->key;
+            addSpecialConfigValue(sc->name.c_str(), sc->key.c_str(), CConfigValue(parsedName.key.c_str()));
+
+            applyDefaultsToCat(*PCAT);
+
+            PCAT->values[sc->key].setFrom(parsedName.key);
+            overrideSpecialCat = PCAT;
+            break;
         }
     }
 
@@ -1077,6 +1071,20 @@ CParseResult CConfig::parseDynamic(const char* command, const char* value) {
     return ret;
 }
 
+SParsedConfigName CConfig::parseConfigName(const char* name) {
+    const std::string NAME = name;
+    const auto        L    = NAME.find('[');
+    const auto        R    = NAME.find("]:", L);
+
+    if (L != std::string::npos && R != std::string::npos)
+        return SParsedConfigName{
+            .category = NAME.substr(0, L),
+            .key      = NAME.substr(L + 1, R - L - 1),
+            .name     = NAME.substr(R + 2),
+        };
+    return SParsedConfigName{.name = name};
+}
+
 void CConfig::clearState() {
     impl->categories.clear();
     impl->parseError = "";
@@ -1107,6 +1115,13 @@ CConfigValue* CConfig::getSpecialConfigValuePtr(const char* category, const char
     }
 
     return nullptr;
+}
+
+CConfigValue* CConfig::getAnyConfigValuePtr(const char* name) {
+    const auto parsedName = parseConfigName(name);
+    if (!parsedName.category.empty())
+        return getSpecialConfigValuePtr(parsedName.category.c_str(), parsedName.name.c_str(), parsedName.key.c_str());
+    return getConfigValuePtr(name);
 }
 
 void CConfig::registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options_) {
