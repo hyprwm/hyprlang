@@ -14,7 +14,6 @@
 class CConfigImpl;
 struct SConfigDefaultValue;
 struct SSpecialCategory;
-struct SParsedConfigName;
 
 #define HYPRLANG_END_MAGIC 0x1337BEEF
 
@@ -375,12 +374,6 @@ namespace Hyprlang {
         */
         CParseResult parseDynamic(const char* line);
         CParseResult parseDynamic(const char* command, const char* value);
-
-        /*!
-            Parse a config name string into category, key, name.
-            category and key default to ""
-         */
-        SParsedConfigName parseConfigName(const char* name);
 
         /*!
             Get a config's value ptr. These are static.

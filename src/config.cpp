@@ -41,6 +41,20 @@ static size_t seekABIStructSize(const void* begin, size_t startOffset, size_t ma
     return 0;
 }
 
+static SParsedConfigName parseConfigName(const char* name) {
+    const std::string NAME = name;
+    const auto        L    = NAME.find('[');
+    const auto        R    = NAME.find("]:", L);
+
+    if (L != std::string::npos && R != std::string::npos)
+        return SParsedConfigName{
+            .category = NAME.substr(0, L),
+            .key      = NAME.substr(L + 1, R - L - 1),
+            .name     = NAME.substr(R + 2),
+        };
+    return SParsedConfigName{.name = name};
+}
+
 static std::expected<std::string, eGetNextLineFailure> getNextLine(std::istream& str, int& rawLineNum, int& lineNum) {
     std::string line     = "";
     std::string nextLine = "";
@@ -1069,20 +1083,6 @@ CParseResult CConfig::parseDynamic(const char* command, const char* value) {
     auto ret                     = parseLine(std::string{command} + "=" + std::string{value}, true);
     impl->currentSpecialCategory = nullptr;
     return ret;
-}
-
-SParsedConfigName CConfig::parseConfigName(const char* name) {
-    const std::string NAME = name;
-    const auto        L    = NAME.find('[');
-    const auto        R    = NAME.find("]:", L);
-
-    if (L != std::string::npos && R != std::string::npos)
-        return SParsedConfigName{
-            .category = NAME.substr(0, L),
-            .key      = NAME.substr(L + 1, R - L - 1),
-            .name     = NAME.substr(R + 2),
-        };
-    return SParsedConfigName{.name = name};
 }
 
 void CConfig::clearState() {
