@@ -390,11 +390,6 @@ namespace Hyprlang {
         CConfigValue* getSpecialConfigValuePtr(const char* category, const char* name, const char* key = nullptr);
 
         /*!
-           Get a basic or special category's config value ptr by calling `getConfigValuePtr` or `getSpecialConfigValuePtr`
-        */
-        CConfigValue* getAnyConfigValuePtr(const char* name);
-
-        /*!
             Get a config value's stored value. Empty on fail
         */
         std::any getConfigValue(const char* name) {
@@ -414,12 +409,10 @@ namespace Hyprlang {
             return val->getValue();
         }
 
-        std::any getAnyConfigValue(const char* name) {
-            CConfigValue* val = getAnyConfigValuePtr(name);
-            if (!val)
-                return {};
-            return val->getValue();
-        }
+        /*!
+            Get a basic or special config value's stored value. Empty on fail.
+        */
+        std::any getAnyConfigValue(const char* name);
 
         /*!
             Check whether a special category with the provided key value exists
@@ -472,6 +465,7 @@ namespace Hyprlang {
         void                          applyDefaultsToCat(SSpecialCategory& cat);
         void                          retrieveKeysForCat(const char* category, const char*** out, size_t* len);
         CParseResult                  parseRawStream(const std::string& stream);
+        CConfigValue*                 getAnyConfigValuePtr(const char* name);
     };
 
     /*!
