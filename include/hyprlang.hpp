@@ -411,6 +411,12 @@ namespace Hyprlang {
 
         /*!
             Get a basic or special config value's stored value. Empty on fail.
+
+            Syntax:
+            - `name` -> `general:gaps_out`
+            - `category[key]:name` -> `windowrule[name]:enable`
+
+            \note Prefer `getConfigValuePtr` or `getSpecialConfigValuePtr` to avoid unnecessary lookup and parsing.
         */
         std::any getAnyConfigValue(const char* name);
 
