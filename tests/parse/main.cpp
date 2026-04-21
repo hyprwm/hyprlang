@@ -396,14 +396,14 @@ int main(int argc, char** argv, char** envp) {
         EXPECT(std::any_cast<int64_t>(config.getAnyConfigValue("specialAnonymousNested[c]:nested:value1")),
                std::any_cast<int64_t>(config.getSpecialConfigValue("specialAnonymousNested", "nested:value1", "c")));
         // check against malformed
-        EXPECT(config.getAnyConfigValue("[a]:value").has_value(), false);
-        EXPECT(config.getAnyConfigValue("special[[a]:value").has_value(), false);
-        EXPECT(config.getAnyConfigValue("special[[a]]:value").has_value(), false);
-        EXPECT(config.getAnyConfigValue("special[a]]:value").has_value(), false);
-        EXPECT(config.getAnyConfigValue("special[a]value").has_value(), false);
-        EXPECT(config.getAnyConfigValue("special[avalue").has_value(), false);
-        EXPECT(config.getAnyConfigValue("special]:a[value").has_value(), false);
-        EXPECT(config.getAnyConfigValue("speciala]:value").has_value(), false);
+        EXPECT(config.getAnyConfigValuePtr("[a]:value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[[a]:value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[[a]]:value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[a]]:value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[a]value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special[avalue"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("special]:a[value"), nullptr);
+        EXPECT(config.getAnyConfigValuePtr("speciala]:value"), nullptr);
 
         // test sourcing
         std::cout << " → Testing sourcing\n";

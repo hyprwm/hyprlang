@@ -1124,15 +1124,6 @@ CConfigValue* CConfig::getAnyConfigValuePtr(const char* name) {
     return getConfigValuePtr(name);
 }
 
-std::any CConfig::getAnyConfigValue(const char* name) {
-    CConfigValue* val = getAnyConfigValuePtr(name);
-
-    if (!val)
-        return {};
-
-    return val->getValue();
-}
-
 void CConfig::registerHandler(PCONFIGHANDLERFUNC func, const char* name, SHandlerOptions options_) {
     SHandlerOptions options;
     std::memcpy(&options, &options_, seekABIStructSize(&options_, 0, sizeof(SHandlerOptions)));
