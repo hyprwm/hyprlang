@@ -428,7 +428,7 @@ namespace Hyprlang {
             - `name` -> `general:gaps_out`
             - `category[key]:name` -> `windowrule[name]:enable`
 
-            \note Prefer `getConfigValuePtr` or `getSpecialConfigValuePtr` to avoid unnecessary lookup and parsing.
+            \note Prefer `getConfigValue` or `getSpecialConfigValue` to avoid unnecessary lookup and parsing.
         */
         std::any getAnyConfigValue(const char* name) {
             CConfigValue* val = getAnyConfigValuePtr(name);
