@@ -390,6 +390,18 @@ namespace Hyprlang {
         CConfigValue* getSpecialConfigValuePtr(const char* category, const char* name, const char* key = nullptr);
 
         /*!
+           Get a basic or special category's config value ptr.
+
+           Syntax:
+           - `name` -> `general:gaps_out`
+           - `category[key]:name` -> `windowrule[name]:enable`
+
+           \note Prefer `getConfigValuePtr` or `getSpecialConfigValuePtr` to avoid unnecessary lookup and parsing.
+           \warning The pointer is temporary and only valid for a brief moment
+        */
+        CConfigValue* getAnyConfigValuePtr(const char* name);
+
+        /*!
             Get a config value's stored value. Empty on fail
         */
         std::any getConfigValue(const char* name) {
@@ -404,6 +416,22 @@ namespace Hyprlang {
         */
         std::any getSpecialConfigValue(const char* category, const char* name, const char* key = nullptr) {
             CConfigValue* val = getSpecialConfigValuePtr(category, name, key);
+            if (!val)
+                return {};
+            return val->getValue();
+        }
+
+        /*!
+            Get a basic or special config value's stored value. Empty on fail.
+
+            Syntax:
+            - `name` -> `general:gaps_out`
+            - `category[key]:name` -> `windowrule[name]:enable`
+
+            \note Prefer `getConfigValue` or `getSpecialConfigValue` to avoid unnecessary lookup and parsing.
+        */
+        std::any getAnyConfigValue(const char* name) {
+            CConfigValue* val = getAnyConfigValuePtr(name);
             if (!val)
                 return {};
             return val->getValue();
